@@ -25,7 +25,7 @@ namespace ExcelAddIn2
             public string SAHead;
             public int CMPosition;
             public string CMHead;
-            public bool SARequired;
+            public bool Required;
             public string defaultValue;
             public bool mapDB;
 
@@ -121,7 +121,7 @@ namespace ExcelAddIn2
             cmd1.CommandType = CommandType.Text;
             cmd1.Connection = sqlConnection1;
             SqlDataReader reader1;
-            cmd1.CommandText = "SELECT SAColumnNbr,SAHeading,CMColumnNbr,CMHeading, SARequired, DefaultValue, mapDB FROM dbo.ExcelHeadingMap order by SAColumnNbr";
+            cmd1.CommandText = "SELECT SAColumnNbr,SAHeading,CMColumnNbr,CMHeading, Required, DefaultValue, mapDB FROM dbo.ExcelHeadingMap order by SAColumnNbr";
 
             sqlConnection1.Open();
             reader1 = cmd1.ExecuteReader();
@@ -140,8 +140,8 @@ namespace ExcelAddIn2
                     thisColumnMap.CMPosition = (reader1.IsDBNull(2) ? 0 : reader1.GetInt32(2));
                     //thisColumnMap.CMHead = reader1.GetString(3);
                     thisColumnMap.CMHead = (reader1.IsDBNull(3) ? "" : reader1.GetString(3));
-                    thisColumnMap.SARequired = (reader1.IsDBNull(4) ? false : reader1.GetBoolean(4));
-                    //thisColumnMap.SARequired = reader1.GetBoolean(4);
+                    thisColumnMap.Required = (reader1.IsDBNull(4) ? false : reader1.GetBoolean(4));
+                    //thisColumnMap.Required = reader1.GetBoolean(4);
                     thisColumnMap.defaultValue = (reader1.IsDBNull(5) ? "" : reader1.GetString(5));
                     thisColumnMap.mapDB = (reader1.IsDBNull(6) ? false : reader1.GetBoolean(6));
 
@@ -310,7 +310,7 @@ namespace ExcelAddIn2
 
             Excel.Worksheet thisWS = (Excel.Worksheet)Globals.ThisAddIn.Application.ActiveSheet;
 
-
+            
             //*****************************************************************************************************************************************************
             //* Load up the database driven mapped fields: categor, sale, consignor, consignment
             //****************************************************************************************************************************************************
@@ -343,7 +343,7 @@ namespace ExcelAddIn2
             ArrayList reqSaColNbr = new ArrayList();
             foreach (OneColumnMap map in headingsMap)
             {
-                if (map.SARequired)           //if CM heading mapped to SA Heading
+                if (map.Required)           //if CM heading mapped to SA Heading
                 {
                     reqSaColNbr.Add(map.SAPosition);
                 }
@@ -401,6 +401,7 @@ namespace ExcelAddIn2
             }
 
             int SACategoryId = 0;
+            string EbayCategoryId = "";
             int SAAuctionId = 0;
             int SAConsignorId = 0;
 
@@ -451,11 +452,11 @@ namespace ExcelAddIn2
 
                                 reader2.Close();
                             }
-                            else if (thisWS.Cells[1, c].Value == "CategoryId")
+                            else if (thisWS.Cells[1, c].Value == "CategoryId")  
                             {
                                 SACategoryId = 0;
 
-                                cmd2.CommandText = "SELECT * FROM dbo.CategoryMap where CMCategoryTxt = '" + thisWS.Cells[r, c].Value + "'";    //mapping step stuffed CM value, so now re-map
+                                cmd2.CommandText = "SELECT SAid FROM dbo.CategoryMap where CMCategoryTxt = '" + thisWS.Cells[r, c].Value + "'";    //mapping step stuffed CM value, so now re-map
                                 reader2 = cmd2.ExecuteReader();
 
 
@@ -525,7 +526,80 @@ namespace ExcelAddIn2
 
                                 reader2.Close();
                             }
+                            else if (thisWS.Cells[1, c].Value == "EbayPrimaryCategoryId")
+                            {
+                                EbayCategoryId = "";
 
+                                cmd2.CommandText = "SELECT EBid FROM dbo.CategoryMap where CMCategoryTxt = '" + thisWS.Cells[r, c].Value + "'";    //mapping step stuffed CM value, so now re-map
+                                reader2 = cmd2.ExecuteReader();
+
+
+                                if (reader2.HasRows)
+                                {
+                                    while (reader2.Read())
+                                    {
+
+                                        //CMCategoryTxt = reader2.GetString(1);
+                                        //SACategoryTxt = reader2.GetString(3);
+                                        //EBCategoryTxt = reader2.GetString(5);
+
+                                        EbayCategoryId = reader2.GetString(0);              //Note EBay id is string until further known
+                                        thisWS.Cells[r, c].Value = EbayCategoryId;
+                                        thisWS.Cells[r, c].Interior.Color = Color.Blue;     //assume it's not red alread because these was a value to lookup
+                                        //break;
+                                    }
+                                }
+                                else
+                                {
+                                    //((Excel.Range)thisWS.Cells[r, c]).Interior.Color = Color.Red;
+                                    thisWS.Cells[r, c].Interior.Color = Color.Red;
+
+                                    //TODO: add row,column and heading to comment
+                                    //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
+                                    thisWS.Cells[r, c].ClearComments();
+                                    thisWS.Cells[r, c].AddComment("Tried to map CM category: " + thisWS.Cells[r, c].Value + " to EBay category id - CM category not found in CategoryMap table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
+                                    //thisWS.Cells[r, c].Comment[1].AutoFit = true;
+                                }
+
+                                reader2.Close();
+                            }
+                            else if (thisWS.Cells[1, c].Value == "EbaySecondaryCategoryId")
+                            {
+                                EbayCategoryId = "";
+
+                                cmd2.CommandText = "SELECT EBid FROM dbo.CategoryMap where CMCategoryTxt = '" + thisWS.Cells[r, c].Value + "'";    //mapping step stuffed CM value, so now re-map
+                                reader2 = cmd2.ExecuteReader();
+
+
+                                if (reader2.HasRows)
+                                {
+                                    while (reader2.Read())
+                                    {
+
+                                        //CMCategoryTxt = reader2.GetString(1);
+                                        //SACategoryTxt = reader2.GetString(3);
+                                        //EBCategoryTxt = reader2.GetString(5);
+
+                                        EbayCategoryId = reader2.GetString(0);              //Note EBay id is string until further known
+                                        thisWS.Cells[r, c].Value = EbayCategoryId;
+                                        thisWS.Cells[r, c].Interior.Color = Color.Blue;     //assume it's not red alread because these was a value to lookup
+                                        //break;
+                                    }
+                                }
+                                else
+                                {
+                                    //((Excel.Range)thisWS.Cells[r, c]).Interior.Color = Color.Red;
+                                    thisWS.Cells[r, c].Interior.Color = Color.Red;
+
+                                    //TODO: add row,column and heading to comment
+                                    //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
+                                    thisWS.Cells[r, c].ClearComments();
+                                    thisWS.Cells[r, c].AddComment("Tried to map CM category: " + thisWS.Cells[r, c].Value + " to EBay category id - CM category not found in CategoryMap table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
+                                    //thisWS.Cells[r, c].Comment[1].AutoFit = true;
+                                }
+
+                                reader2.Close();
+                            }
 
 
 
