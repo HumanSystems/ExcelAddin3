@@ -116,7 +116,8 @@ namespace ExcelAddIn2
             
 
 
-            SqlConnection sqlConnection1 = new SqlConnection("Data Source=BACKUPDELL\\SQLEXPRESS ;Initial Catalog=SimpleAuction;Integrated Security=True");
+            //SqlConnection sqlConnection1 = new SqlConnection("Data Source=BACKUPDELL\\SQLEXPRESS ;Initial Catalog=SimpleAuction;Integrated Security=True");
+            SqlConnection sqlConnection1 = new SqlConnection("Data Source=BACKUPDELL ;Initial Catalog=Describing;Integrated Security=True");
             SqlCommand cmd1 = new SqlCommand();
             cmd1.CommandType = CommandType.Text;
             cmd1.Connection = sqlConnection1;
@@ -320,7 +321,8 @@ namespace ExcelAddIn2
 
 
             //Set up connection for multiple queries
-            SqlConnection sqlConnection2 = new SqlConnection("Data Source=BACKUPDELL\\SQLEXPRESS ;Initial Catalog=SimpleAuction;Integrated Security=True");
+            //SqlConnection sqlConnection2 = new SqlConnection("Data Source=BACKUPDELL\\SQLEXPRESS ;Initial Catalog=SimpleAuction;Integrated Security=True");
+            SqlConnection sqlConnection2 = new SqlConnection("Data Source=BACKUPDELL;Initial Catalog=Describing;Integrated Security=True");
             SqlCommand cmd2 = new SqlCommand();
             cmd2.CommandType = CommandType.Text;
             cmd2.Connection = sqlConnection2;
@@ -419,7 +421,7 @@ namespace ExcelAddIn2
                             {
                                 SAAuctionId = 0;
 
-                                cmd2.CommandText = "SELECT SAAuctionId FROM dbo.AuctionMap where CMAuctionId = '" + thisWS.Cells[r, c].Value + "'";    //mapping step stuffed CM value, so now re-map
+                                cmd2.CommandText = "SELECT SAAuctionId FROM dbo.Auction where CMAuctionId = '" + thisWS.Cells[r, c].Value + "'";    //mapping step stuffed CM value, so now re-map
                                 reader2 = cmd2.ExecuteReader();
 
 
@@ -446,7 +448,7 @@ namespace ExcelAddIn2
                                     //TODO: add row,column and heading to comment
                                     //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
                                     thisWS.Cells[r, c].ClearComments();
-                                    thisWS.Cells[r, c].AddComment("Tried to map CM sale id: " + thisWS.Cells[r, c].Value + " to SA auction id - CM sale id not found in AuctionMap table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
+                                    thisWS.Cells[r, c].AddComment("Tried to map CM sale id: " + thisWS.Cells[r, c].Value + " to SA auction id - CM sale id not found in Auction table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
                                     //thisWS.Cells[r, c].Comment[1].AutoFit = true;
                                 }
 
@@ -456,7 +458,7 @@ namespace ExcelAddIn2
                             {
                                 SACategoryId = 0;
 
-                                cmd2.CommandText = "SELECT SAid FROM dbo.CategoryMap where CMCategoryTxt = '" + thisWS.Cells[r, c].Value + "'";    //mapping step stuffed CM value, so now re-map
+                                cmd2.CommandText = "SELECT SAid FROM dbo.Category where CMCategoryTxt = '" + thisWS.Cells[r, c].Value + "'";    //mapping step stuffed CM value, so now re-map
                                 reader2 = cmd2.ExecuteReader();
 
 
@@ -483,7 +485,7 @@ namespace ExcelAddIn2
                                     //TODO: add row,column and heading to comment
                                     //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
                                     thisWS.Cells[r, c].ClearComments();
-                                    thisWS.Cells[r, c].AddComment("Tried to map CM category: " + thisWS.Cells[r, c].Value + " to SA category id - CM category not found in CategoryMap table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
+                                    thisWS.Cells[r, c].AddComment("Tried to map CM category: " + thisWS.Cells[r, c].Value + " to SA category id - CM category not found in Category table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
                                     //thisWS.Cells[r, c].Comment[1].AutoFit = true;
                                 }
 
@@ -493,7 +495,7 @@ namespace ExcelAddIn2
                             {
                                 SAConsignorId = 0;
 
-                                cmd2.CommandText = "SELECT SAConsignorId FROM dbo.ConsignorMap where CMConsignorId = '" + thisWS.Cells[r, c].Value + "'";    //mapping step stuffed CM value, so now re-map
+                                cmd2.CommandText = "SELECT SAConsignorId FROM dbo.Consignor where CMConsignorId = '" + thisWS.Cells[r, c].Value + "'";    //mapping step stuffed CM value, so now re-map
                                 reader2 = cmd2.ExecuteReader();
 
 
@@ -520,7 +522,7 @@ namespace ExcelAddIn2
                                     //TODO: add row,column and heading to comment
                                     //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
                                     thisWS.Cells[r, c].ClearComments();
-                                    thisWS.Cells[r, c].AddComment("Tried to map CM consignor id: " + thisWS.Cells[r, c].Value + " to SA consignor id - CM sale id not found in ConsignorMap table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
+                                    thisWS.Cells[r, c].AddComment("Tried to map CM consignor id: " + thisWS.Cells[r, c].Value + " to SA consignor id - CM sale id not found in Consignor table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
                                     //thisWS.Cells[r, c].Comment[1].AutoFit = true;
                                 }
 
@@ -530,7 +532,7 @@ namespace ExcelAddIn2
                             {
                                 EbayCategoryId = "";
 
-                                cmd2.CommandText = "SELECT EBid FROM dbo.CategoryMap where CMCategoryTxt = '" + thisWS.Cells[r, c].Value + "'";    //mapping step stuffed CM value, so now re-map
+                                cmd2.CommandText = "SELECT EBid FROM dbo.Category where CMCategoryTxt = '" + thisWS.Cells[r, c].Value + "'";    //mapping step stuffed CM value, so now re-map
                                 reader2 = cmd2.ExecuteReader();
 
 
@@ -557,7 +559,7 @@ namespace ExcelAddIn2
                                     //TODO: add row,column and heading to comment
                                     //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
                                     thisWS.Cells[r, c].ClearComments();
-                                    thisWS.Cells[r, c].AddComment("Tried to map CM category: " + thisWS.Cells[r, c].Value + " to EBay category id - CM category not found in CategoryMap table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
+                                    thisWS.Cells[r, c].AddComment("Tried to map CM category: " + thisWS.Cells[r, c].Value + " to EBay category id - CM category not found in Category table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
                                     //thisWS.Cells[r, c].Comment[1].AutoFit = true;
                                 }
 
@@ -567,7 +569,7 @@ namespace ExcelAddIn2
                             {
                                 EbayCategoryId = "";
 
-                                cmd2.CommandText = "SELECT EBid FROM dbo.CategoryMap where CMCategoryTxt = '" + thisWS.Cells[r, c].Value + "'";    //mapping step stuffed CM value, so now re-map
+                                cmd2.CommandText = "SELECT EBid FROM dbo.Category where CMCategoryTxt = '" + thisWS.Cells[r, c].Value + "'";    //mapping step stuffed CM value, so now re-map
                                 reader2 = cmd2.ExecuteReader();
 
 
@@ -594,7 +596,7 @@ namespace ExcelAddIn2
                                     //TODO: add row,column and heading to comment
                                     //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
                                     thisWS.Cells[r, c].ClearComments();
-                                    thisWS.Cells[r, c].AddComment("Tried to map CM category: " + thisWS.Cells[r, c].Value + " to EBay category id - CM category not found in CategoryMap table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
+                                    thisWS.Cells[r, c].AddComment("Tried to map CM category: " + thisWS.Cells[r, c].Value + " to EBay category id - CM category not found in Category table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
                                     //thisWS.Cells[r, c].Comment[1].AutoFit = true;
                                 }
 
@@ -610,7 +612,7 @@ namespace ExcelAddIn2
                             //{
                             //    SACategoryId = 0;
 
-                            //    cmd2.CommandText = "SELECT * FROM dbo.CategoryMap where CMCategoryTxt = '" + thisWS.Cells[r, c].Value + "'";    //mapping step stuffed CM value, so now re-map
+                            //    cmd2.CommandText = "SELECT * FROM dbo.Category where CMCategoryTxt = '" + thisWS.Cells[r, c].Value + "'";    //mapping step stuffed CM value, so now re-map
                             //    reader2 = cmd2.ExecuteReader();
 
 
@@ -636,7 +638,7 @@ namespace ExcelAddIn2
 
                             //        //TODO: add row,column and heading to comment
                             //        //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
-                            //        thisWS.Cells[r, c].AddComment("Tried to map CM category: " + thisWS.Cells[r, c].Value + " to SA category id - CM category not found in CategoryMap table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
+                            //        thisWS.Cells[r, c].AddComment("Tried to map CM category: " + thisWS.Cells[r, c].Value + " to SA category id - CM category not found in Category table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
                             //    }
 
 
