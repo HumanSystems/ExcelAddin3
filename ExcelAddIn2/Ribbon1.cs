@@ -37,6 +37,9 @@ namespace ExcelAddIn2
             public bool Required;
             public string defaultValue;
             public bool mapDB;
+            public bool SARequired;
+            public string Note;
+
 
         }
 
@@ -124,7 +127,7 @@ namespace ExcelAddIn2
             cmd1.CommandType = CommandType.Text;
             cmd1.Connection = sqlConnection1;
             SqlDataReader reader1;
-            cmd1.CommandText = "SELECT SAColumnNbr,SAHeading,CMColumnNbr,CMHeading, Required, DefaultValue, mapDB FROM dbo.ExcelHeadingMap order by SAColumnNbr";
+            cmd1.CommandText = "SELECT SAColumnNbr,SAHeading,CMColumnNbr,CMHeading, Required, DefaultValue, mapDB, SARequired, Note FROM dbo.ExcelHeadingMap order by SAColumnNbr";
 
             sqlConnection1.Open();
             reader1 = cmd1.ExecuteReader();
@@ -147,6 +150,9 @@ namespace ExcelAddIn2
                     //thisColumnMap.Required = reader1.GetBoolean(4);
                     thisColumnMap.defaultValue = (reader1.IsDBNull(5) ? "" : reader1.GetString(5));
                     thisColumnMap.mapDB = (reader1.IsDBNull(6) ? false : reader1.GetBoolean(6));
+                    thisColumnMap.SARequired = (reader1.IsDBNull(7) ? false : reader1.GetBoolean(7));
+                    thisColumnMap.Note = (reader1.IsDBNull(8) ? "" : reader1.GetString(8));
+
 
 
 
@@ -167,7 +173,7 @@ namespace ExcelAddIn2
                     if (thisColumnMap.CMHead != null)
                     {
                         thisWS.Cells[1, thisColumnMap.SAPosition].ClearComments();
-                        thisWS.Cells[1, thisColumnMap.SAPosition].AddComment("Pulled from Catalog Master field: " + thisColumnMap.CMHead);
+                        thisWS.Cells[1, thisColumnMap.SAPosition].AddComment("Pulled from Catalog Master field: " + thisColumnMap.CMHead + ".  " + thisColumnMap.Note);
                     }
 
 
@@ -208,7 +214,7 @@ namespace ExcelAddIn2
             }
 
             //TODO: NEED TO EDIT SOURCE? I.E. CERT BODY WITH NO GRADE OR YEAR?
-
+            
 
             //TODO: YOU MAY WANT TO LEAVE THIS CONNECTION OPEN IF STORING STUFF IN DB
             reader1.Close();
@@ -240,7 +246,7 @@ namespace ExcelAddIn2
                 MessageBox.Show("here is file name about to process: " + filename);
 
                 //excelApp.StatusBar = String.Format("Processing line {0} on {1}.",rows,rowNum);
-                Globals.ThisAddIn.Application.StatusBar = String.Format("Loading file {0}: .", filecount + 1, openFileDialog1.SafeFileNames[filecount]);
+                Globals.ThisAddIn.Application.StatusBar = String.Format("Loading file {0}: {1}", filecount + 1, openFileDialog1.SafeFileNames[filecount]);
 
                 //TODO: CHECK DATA BY COLUMN AS IMPORT
 
@@ -402,6 +408,8 @@ namespace ExcelAddIn2
             //*************************************************************************************************************************************************************
             ValidateSpreadsheet();
 
+            Globals.ThisAddIn.Application.StatusBar = String.Format("All Catalog Master files are loaded and Validation is complete");
+
             Cursor.Current = Cursors.Default;   //TODO: HOW TO CLEAN UP ALL EXCEL OBJECTS
         }
 
@@ -525,6 +533,9 @@ namespace ExcelAddIn2
             string EbayCategoryId = "";
             int SAAuctionId = 0;
             int SAConsignorId = 0;
+            int SAPriceGuide1Id = 0;
+            int SAPriceGuide2Id = 0;
+            int SALOAProviderId = 0;
 
             //Check fields that require database mapping by ID
             for (int r = 2; r <= rowCount; r++) {
@@ -640,6 +651,117 @@ namespace ExcelAddIn2
                                 //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
                                 thisWS.Cells[r, c].ClearComments();
                                 thisWS.Cells[r, c].AddComment("Tried to map CM consignor id: " + thisWS.Cells[r, c].Value + " to SA consignor id - CM consignor id not found in Consignor table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
+                                //thisWS.Cells[r, c].Comment[1].AutoFit = true;
+                            }
+
+                            reader2.Close();
+                        }
+                        else if (thisWS.Cells[1, c].Value == "PriceGuide1Id")
+                        {
+                            SAPriceGuide1Id = 0;
+
+                            cmd2.CommandText = "SELECT SAId FROM dbo.Catalog_reference where SA_Name = '" + thisWS.Cells[r, c].Value + "'";    //mapping step stuffed CM value, so now re-map
+                            reader2 = cmd2.ExecuteReader();
+
+
+                            if (reader2.HasRows)
+                            {
+                                while (reader2.Read())
+                                {
+
+                                    //CMCategoryTxt = reader2.GetString(1);
+                                    //SACategoryTxt = reader2.GetString(3);
+                                    //EBCategoryTxt = reader2.GetString(5);
+
+                                    SAPriceGuide1Id = reader2.GetInt32(0);         //assume it's not red alread because these was a value to lookup
+                                    thisWS.Cells[r, c].Value = SAPriceGuide1Id;
+                                    thisWS.Cells[r, c].Interior.Color = Color.Blue;
+                                    //break;
+                                }
+                            }
+                            else
+                            {
+                                //((Excel.Range)thisWS.Cells[r, c]).Interior.Color = Color.Red;
+                                thisWS.Cells[r, c].Interior.Color = Color.Red;
+
+                                //TODO: add row,column and heading to comment
+                                //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
+                                thisWS.Cells[r, c].ClearComments();
+                                thisWS.Cells[r, c].AddComment("Tried to map CM PriceGuide1 id: " + thisWS.Cells[r, c].Value + " to SA price guide id - CM PriceGuide id not found in Catalog_Reference table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
+                                //thisWS.Cells[r, c].Comment[1].AutoFit = true;
+                            }
+
+                            reader2.Close();
+                        }
+                        else if (thisWS.Cells[1, c].Value == "PriceGuide2Id")
+                        {
+                            SAPriceGuide2Id = 0;
+
+                            cmd2.CommandText = "SELECT SAId FROM dbo.Catalog_reference where SA_Name = '" + thisWS.Cells[r, c].Value + "'";    //mapping step stuffed CM value, so now re-map
+                            reader2 = cmd2.ExecuteReader();
+
+
+                            if (reader2.HasRows)
+                            {
+                                while (reader2.Read())
+                                {
+
+                                    //CMCategoryTxt = reader2.GetString(1);
+                                    //SACategoryTxt = reader2.GetString(3);
+                                    //EBCategoryTxt = reader2.GetString(5);
+
+                                    SAPriceGuide2Id = reader2.GetInt32(0);         //assume it's not red alread because these was a value to lookup
+                                    thisWS.Cells[r, c].Value = SAPriceGuide2Id;
+                                    thisWS.Cells[r, c].Interior.Color = Color.Blue;
+                                    //break;
+                                }
+                            }
+                            else
+                            {
+                                //((Excel.Range)thisWS.Cells[r, c]).Interior.Color = Color.Red;
+                                thisWS.Cells[r, c].Interior.Color = Color.Red;
+
+                                //TODO: add row,column and heading to comment
+                                //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
+                                thisWS.Cells[r, c].ClearComments();
+                                thisWS.Cells[r, c].AddComment("Tried to map CM PriceGuide2 id: " + thisWS.Cells[r, c].Value + " to SA price guide id - CM PriceGuide id not found in Catalog_Reference table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
+                                //thisWS.Cells[r, c].Comment[1].AutoFit = true;
+                            }
+
+                            reader2.Close();
+                        }
+                        else if (thisWS.Cells[1, c].Value == "LOAProviderId")
+                        {
+                            SALOAProviderId = 0;
+
+                            cmd2.CommandText = "SELECT SAId FROM dbo.LOA_Provider where CM_Name = '" + thisWS.Cells[r, c].Value + "'";    //mapping step stuffed CM value, so now re-map
+                            reader2 = cmd2.ExecuteReader();
+
+
+                            if (reader2.HasRows)
+                            {
+                                while (reader2.Read())
+                                {
+
+                                    //CMCategoryTxt = reader2.GetString(1);
+                                    //SACategoryTxt = reader2.GetString(3);
+                                    //EBCategoryTxt = reader2.GetString(5);
+
+                                    SALOAProviderId = reader2.GetInt32(0);         //assume it's not red alread because these was a value to lookup
+                                    thisWS.Cells[r, c].Value = SALOAProviderId;
+                                    thisWS.Cells[r, c].Interior.Color = Color.Blue;
+                                    //break;
+                                }
+                            }
+                            else
+                            {
+                                //((Excel.Range)thisWS.Cells[r, c]).Interior.Color = Color.Red;
+                                thisWS.Cells[r, c].Interior.Color = Color.Red;
+
+                                //TODO: add row,column and heading to comment
+                                //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
+                                thisWS.Cells[r, c].ClearComments();
+                                thisWS.Cells[r, c].AddComment("Tried to map CM Certificate Id: " + thisWS.Cells[r, c].Value + " to SA price guide id - CM PriceGuide id not found in Catalog_Reference table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
                                 //thisWS.Cells[r, c].Comment[1].AutoFit = true;
                             }
 
