@@ -39,9 +39,9 @@ namespace ExcelAddIn2
             public bool mapDB;
             public bool SARequired;
             public string Note;
+         }
 
-
-        }
+        public const bool EBayImplemented = false;
 
 
         //******************************************************************************************************************************************
@@ -243,7 +243,7 @@ namespace ExcelAddIn2
                 //TODO: CHECK FILE NAME BEFORE OPENING AGAINST ??? TO MAKE SURE IT'S AN ?UNPROCESSED? ?NEW? ?WELL-NAMED? CATALOG MASTER FILE
                 //filename = openFileDialog1.FileName;
                 filename = fn;
-                MessageBox.Show("here is file name about to process: " + filename);
+                MessageBox.Show("For pause - here is file name about to process: " + filename);
 
                 //excelApp.StatusBar = String.Format("Processing line {0} on {1}.",rows,rowNum);
                 Globals.ThisAddIn.Application.StatusBar = String.Format("Loading file {0}: {1}", filecount + 1, openFileDialog1.SafeFileNames[filecount]);
@@ -264,7 +264,7 @@ namespace ExcelAddIn2
                 fromXlRange = fromXlWorksheet.UsedRange;
 
 
-                MessageBox.Show("CM (from) file should be open now ... begin data map/load from CM to current SA lot spreadsheet");
+                //MessageBox.Show("CM (from) file should be open now ... begin data map/load from CM to current SA lot spreadsheet");
                 //Globals.ThisAddIn.Application.StatusBar = "processing file";
                 Cursor.Current = Cursors.Hand;
 
@@ -408,6 +408,8 @@ namespace ExcelAddIn2
             //*************************************************************************************************************************************************************
             ValidateSpreadsheet();
 
+            //%%%%%%%%%set lot numbers
+
             Globals.ThisAddIn.Application.StatusBar = String.Format("All Catalog Master files are loaded and Validation is complete");
 
             Cursor.Current = Cursors.Default;   //TODO: HOW TO CLEAN UP ALL EXCEL OBJECTS
@@ -464,6 +466,7 @@ namespace ExcelAddIn2
                 {
                     //reqSaColNbr.Add(map.SAPosition);
                     reqSaColName.Add(map.SAHead);
+                 
                 }
             }
 
@@ -507,6 +510,8 @@ namespace ExcelAddIn2
                     //value = thisWS.Cells[r, c].Value;
                     //valueint = 0;
                     //o = Int32.TryParse(value, out valueint);
+
+                  
                     foreach (string reqSAName in reqSaColName) {
                         //value = thisWS.Cells[r, c].Value;
                         //if ((c == reqSACol) && ((thisWS.Cells[r, c].Value == null) || (valueint == 0))) {
@@ -533,9 +538,11 @@ namespace ExcelAddIn2
             string EbayCategoryId = "";
             int SAAuctionId = 0;
             int SAConsignorId = 0;
+            int SAConsignmentId = 0;
             int SAPriceGuide1Id = 0;
             int SAPriceGuide2Id = 0;
             int SALOAProviderId = 0;
+            int SAShippingCategoryId = 0;
 
             //Check fields that require database mapping by ID
             for (int r = 2; r <= rowCount; r++) {
@@ -599,9 +606,15 @@ namespace ExcelAddIn2
                                     //SACategoryTxt = reader2.GetString(3);
                                     //EBCategoryTxt = reader2.GetString(5);
 
+                                    string val = thisWS.Cells[r, c].Value;
+
                                     SACategoryId = reader2.GetInt32(0);         //assume it's not red alread because these was a value to lookup
                                     thisWS.Cells[r, c].Value = SACategoryId;
                                     thisWS.Cells[r, c].Interior.Color = Color.Blue;
+
+                                    thisWS.Cells[r, c].ClearComments();
+                                    thisWS.Cells[r, c].AddComment("Mapped CM Country Lookup: " + val + " to SA Category SAID " + SACategoryId);
+
                                     //break;
                                 }
                             }
@@ -613,7 +626,50 @@ namespace ExcelAddIn2
                                 //TODO: add row,column and heading to comment
                                 //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
                                 thisWS.Cells[r, c].ClearComments();
-                                thisWS.Cells[r, c].AddComment("Tried to map CM category: " + thisWS.Cells[r, c].Value + " to SA category id - CM category not found in Category table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
+                                thisWS.Cells[r, c].AddComment("Tried to map CM Country Lookup: " + thisWS.Cells[r, c].Value + " to SA category id - CM CMCategoryTxt not found in Category table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
+                                //thisWS.Cells[r, c].Comment[1].AutoFit = true;
+                            }
+
+                            reader2.Close();
+                        }
+                        else if (thisWS.Cells[1, c].Value == "CategoryId2")
+                        {
+                            SACategoryId = 0;
+
+                            cmd2.CommandText = "SELECT SAid FROM dbo.Category where CMCategoryTxt = '" + thisWS.Cells[r, c].Value + "'";    //mapping step stuffed CM value, so now re-map
+                            reader2 = cmd2.ExecuteReader();
+
+
+                            if (reader2.HasRows)
+                            {
+                                while (reader2.Read())
+                                {
+
+                                    //CMCategoryTxt = reader2.GetString(1);
+                                    //SACategoryTxt = reader2.GetString(3);
+                                    //EBCategoryTxt = reader2.GetString(5);
+
+                                    string val = thisWS.Cells[r, c].Value;
+
+                                    SACategoryId = reader2.GetInt32(0);         //assume it's not red alread because these was a value to lookup
+                                    thisWS.Cells[r, c].Value = SACategoryId;
+                                    thisWS.Cells[r, c].Interior.Color = Color.Blue;
+
+                                    thisWS.Cells[r, c].ClearComments();
+                                    thisWS.Cells[r, c].AddComment("Mapped CM Province Lookup: " + val + " to SA Category SAID " + SACategoryId);
+
+                                    //break;
+                                }
+                            }
+                            else
+                            {
+                                //((Excel.Range)thisWS.Cells[r, c]).Interior.Color = Color.Red;
+                                thisWS.Cells[r, c].Interior.Color = Color.Red;
+
+                                //TODO: add row,column and heading to comment
+                                //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
+                                thisWS.Cells[r, c].ClearComments();
+                                thisWS.Cells[r, c].AddComment("Tried to map CM Province Lookup: " + thisWS.Cells[r, c].Value + " to SA category id - CM CMCategoryTxt not found in Category table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
                                 //thisWS.Cells[r, c].Comment[1].AutoFit = true;
                             }
 
@@ -656,6 +712,84 @@ namespace ExcelAddIn2
 
                             reader2.Close();
                         }
+                        //****************
+                        else if (thisWS.Cells[1, c].Value == "ConsignmentTrackingId")
+                        {
+                            SAConsignmentId = 0;
+                            
+
+                            cmd2.CommandText = "SELECT SAId FROM dbo.Consignment where CMId = '" + thisWS.Cells[r, c].Value + "'";    //mapping step stuffed CM value, so now re-map
+                            reader2 = cmd2.ExecuteReader();
+
+
+                            if (reader2.HasRows)
+                            {
+                                while (reader2.Read())
+                                {
+
+                                    //CMCategoryTxt = reader2.GetString(1);
+                                    //SACategoryTxt = reader2.GetString(3);
+                                    //EBCategoryTxt = reader2.GetString(5);
+
+                                    SAConsignmentId = reader2.GetInt32(0);         //assume it's not red alread because these was a value to lookup
+                                    thisWS.Cells[r, c].Value = SAConsignmentId;
+                                    thisWS.Cells[r, c].Interior.Color = Color.Blue;
+                                    //break;
+                                }
+                            }
+                            else
+                            {
+                                //((Excel.Range)thisWS.Cells[r, c]).Interior.Color = Color.Red;
+                                thisWS.Cells[r, c].Interior.Color = Color.Red;
+
+                                //TODO: add row,column and heading to comment
+                                //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
+                                thisWS.Cells[r, c].ClearComments();
+                                thisWS.Cells[r, c].AddComment("Tried to map CM consignment id: " + thisWS.Cells[r, c].Value + " to SA consignment id - CM consignment id not found in Consignment table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
+                                //thisWS.Cells[r, c].Comment[1].AutoFit = true;
+                            }
+
+                            reader2.Close();
+                        }
+                        else if (thisWS.Cells[1, c].Value == "ShippingCategoryId")
+                        {
+                            SAShippingCategoryId = 0;
+
+                            cmd2.CommandText = "SELECT SAid FROM dbo.Shipping_Category where CMCategoryTxt = '" + thisWS.Cells[r, c].Value + "'";    //mapping step stuffed CM value, so now re-map
+                            reader2 = cmd2.ExecuteReader();
+
+
+                            if (reader2.HasRows)
+                            {
+                                while (reader2.Read())
+                                {
+                                    string val = thisWS.Cells[r, c].Value;
+
+                                    SAShippingCategoryId = reader2.GetInt32(0);         //assume it's not red alread because these was a value to lookup
+                                    thisWS.Cells[r, c].Value = SAShippingCategoryId;
+                                    thisWS.Cells[r, c].Interior.Color = Color.Blue;
+
+                                    thisWS.Cells[r, c].ClearComments();
+                                    thisWS.Cells[r, c].AddComment("Mapped CM Package Type: " + val + " to SA Shipping_Category (SAID) " + SAShippingCategoryId);
+
+                                    //break;
+                                }
+                            }
+                            else
+                            {
+                                //((Excel.Range)thisWS.Cells[r, c]).Interior.Color = Color.Red;
+                                thisWS.Cells[r, c].Interior.Color = Color.Red;
+
+                                //TODO: add row,column and heading to comment
+                                //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
+                                thisWS.Cells[r, c].ClearComments();
+                                thisWS.Cells[r, c].AddComment("Tried to map CM Package Type: " + thisWS.Cells[r, c].Value + " to SA Shipping_Category id - CM CMCategoryTxt not found in Shipping_Category table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
+                                //thisWS.Cells[r, c].Comment[1].AutoFit = true;
+                            }
+
+                            reader2.Close();
+                        }
+
                         else if (thisWS.Cells[1, c].Value == "PriceGuide1Id")
                         {
                             SAPriceGuide1Id = 0;
@@ -673,7 +807,7 @@ namespace ExcelAddIn2
                                     //SACategoryTxt = reader2.GetString(3);
                                     //EBCategoryTxt = reader2.GetString(5);
 
-                                    SAPriceGuide1Id = reader2.GetInt32(0);         //assume it's not red alread because these was a value to lookup
+                                    SAPriceGuide1Id = reader2.GetInt32(0);         //assume it's not red already because these was a value to lookup
                                     thisWS.Cells[r, c].Value = SAPriceGuide1Id;
                                     thisWS.Cells[r, c].Interior.Color = Color.Blue;
                                     //break;
@@ -767,7 +901,7 @@ namespace ExcelAddIn2
 
                             reader2.Close();
                         }
-                        else if (thisWS.Cells[1, c].Value == "EbayPrimaryCategoryId")
+                        else if (thisWS.Cells[1, c].Value == "EbayPrimaryCategoryId" && EBayImplemented)
                         {
                             EbayCategoryId = "";
 
@@ -804,7 +938,121 @@ namespace ExcelAddIn2
 
                             reader2.Close();
                         }
-                        else if (thisWS.Cells[1, c].Value == "EbaySecondaryCategoryId")
+
+                        // https://drive.google.com/drive/folders/1grl8P1eV5HUsjd0_LlLPVHJfh9eukaPz
+                        else if (thisWS.Cells[1, c].Value == "Condition")
+                        {
+                            string symbols = thisWS.Cells[r, c].Value;
+                            var imgs = new List<string>();
+               
+
+                            int i = 0;
+                            while ((i = symbols.IndexOf("img", i)) != -1)
+                            {
+                                // Print out the substring.
+                                //Console.WriteLine("row: {0} has {1} in position {2}", r, symbols.Substring(i,3), i);
+                                Debug.WriteLine("row: {0} has {1} in position {2}", r, symbols.Substring(i,3), i);
+
+                                //<img src="http://www.kelleherauctions.com/images/mint.gif" align="top">
+                                string imgname = "";
+                                int start = i + 45;
+                                int backslash = symbols.IndexOf("/", start);
+                                backslash += 1;
+                                int period = symbols.IndexOf(".", start);
+                                int displace = 0;
+
+                                if (period != -1)
+                                {
+                                    displace = period - backslash;
+
+                                    imgname = symbols.Substring(backslash, displace);
+                                    Debug.WriteLine("row: {0} image name {1}", r, imgname);
+
+                                    imgs.Add(imgname);
+                                }
+
+                                // Increment the index.
+                                i++;
+                            }
+
+
+                            String term = string.Empty;
+                            bool inbracket = false;
+
+                            foreach (char ch in symbols)
+                            {
+                                if (ch == '<')
+                                {
+                                    inbracket = true;
+                                    if (term != "")
+                                    {
+                                        imgs.Add(term);
+                                        term = "";
+                                    }
+
+                                }
+                                else
+                                    if (ch == '>')
+                                {
+                                    inbracket = false;
+                                }
+                                else 
+                                    if (!inbracket && ch != '/')
+                                {
+                                    term += ch;
+                                }
+
+
+                            }
+
+                            if (term != "")
+                            {
+                                imgs.Add(term);
+                                term = "";
+                            }
+
+                            //string sub = input.Substring(0, 3);
+                            //Console.WriteLine("Substring: {0}", sub);
+
+
+
+                            //EbayCategoryId = "";
+
+                            //cmd2.CommandText = "SELECT EBid FROM dbo.Category where CMCategoryTxt = '" + thisWS.Cells[r, c].Value + "'";    //mapping step stuffed CM value, so now re-map
+                            //reader2 = cmd2.ExecuteReader();
+
+
+                            //if (reader2.HasRows)
+                            //{
+                            //    while (reader2.Read())
+                            //    {
+
+                            //        //CMCategoryTxt = reader2.GetString(1);
+                            //        //SACategoryTxt = reader2.GetString(3);
+                            //        //EBCategoryTxt = reader2.GetString(5);
+
+                            //        EbayCategoryId = reader2.GetString(0);              //Note EBay id is string until further known
+                            //        thisWS.Cells[r, c].Value = EbayCategoryId;
+                            //        thisWS.Cells[r, c].Interior.Color = Color.Blue;     //assume it's not red alread because these was a value to lookup
+                            //                                                            //break;
+                            //    }
+                            //}
+                            //else
+                            //{
+                            //    //((Excel.Range)thisWS.Cells[r, c]).Interior.Color = Color.Red;
+                            //    thisWS.Cells[r, c].Interior.Color = Color.Red;
+
+                            //    //TODO: add row,column and heading to comment
+                            //    //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
+                            //    thisWS.Cells[r, c].ClearComments();
+                            //    thisWS.Cells[r, c].AddComment("Tried to map CM category: " + thisWS.Cells[r, c].Value + " to EBay category id - CM category not found in Category table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
+                            //    //thisWS.Cells[r, c].Comment[1].AutoFit = true;
+                            //}
+
+                            //reader2.Close();
+                        }
+
+                        else if (thisWS.Cells[1, c].Value == "EbaySecondaryCategoryId" && EBayImplemented)
                         {
                             EbayCategoryId = "";
 
@@ -847,7 +1095,8 @@ namespace ExcelAddIn2
                             if (thisWS.Cells[r, c].Value != null && thisWS.Cells[r, c].Value != 0)
                             {
 
-                                var client = new RestClient("http://kelleherdemo2-com.si-sv2521.com");
+                                //var client = new RestClient("http://kelleherdemo2-com.si-sv2521.com");
+                                var client = new RestClient("http://kelleher-stage-com.si-sv2521.com/Kelleher.aspx?debug=GetInventoryIdBySerialNumber");
 
                                 var request = new RestRequest("/Kelleher.aspx", Method.POST);
                                 request.RequestFormat = DataFormat.Json;
@@ -947,52 +1196,82 @@ namespace ExcelAddIn2
                             }
                         }
 
-
-
-                            //**** Map Consignor Id ****
-                            //if (thisWS.Cells[1, c].Value == "CategoryId")
-                            //{
-                            //    SACategoryId = 0;
-
-                            //    cmd2.CommandText = "SELECT * FROM dbo.Category where CMCategoryTxt = '" + thisWS.Cells[r, c].Value + "'";    //mapping step stuffed CM value, so now re-map
-                            //    reader2 = cmd2.ExecuteReader();
-
-
-                            //    if (reader2.HasRows)
-                            //    {
-                            //        while (reader2.Read())
-                            //        {
-
-                            //            //CMCategoryTxt = reader2.GetString(1);
-                            //            //SACategoryTxt = reader2.GetString(3);
-                            //            //EBCategoryTxt = reader2.GetString(5);
-
-                            //            SACategoryId = reader2.GetInt32(0);         //assume it's not red alread because these was a value to lookup
-                            //            thisWS.Cells[r, c].Value = SACategoryId;
-                            //            thisWS.Cells[r, c].Interior.Color = Color.Blue;
-                            //            break;
-                            //        }
-                            //    }
-                            //    else
-                            //    {
-                            //        //((Excel.Range)thisWS.Cells[r, c]).Interior.Color = Color.Red;
-                            //        thisWS.Cells[r, c].Interior.Color = Color.Red;
-
-                            //        //TODO: add row,column and heading to comment
-                            //        //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
-                            //        thisWS.Cells[r, c].AddComment("Tried to map CM category: " + thisWS.Cells[r, c].Value + " to SA category id - CM category not found in Category table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
-                            //    }
-
-
-
-                            //    reader2.Close();
-                            //}
-
-
                         
-                    }
+
+
+
+
+                                //**** Map Consignor Id ****
+                                //if (thisWS.Cells[1, c].Value == "CategoryId")
+                                //{
+                                //    SACategoryId = 0;
+
+                                //    cmd2.CommandText = "SELECT * FROM dbo.Category where CMCategoryTxt = '" + thisWS.Cells[r, c].Value + "'";    //mapping step stuffed CM value, so now re-map
+                                //    reader2 = cmd2.ExecuteReader();
+
+
+                                //    if (reader2.HasRows)
+                                //    {
+                                //        while (reader2.Read())
+                                //        {
+
+                                //            //CMCategoryTxt = reader2.GetString(1);
+                                //            //SACategoryTxt = reader2.GetString(3);
+                                //            //EBCategoryTxt = reader2.GetString(5);
+
+                                //            SACategoryId = reader2.GetInt32(0);         //assume it's not red alread because these was a value to lookup
+                                //            thisWS.Cells[r, c].Value = SACategoryId;
+                                //            thisWS.Cells[r, c].Interior.Color = Color.Blue;
+                                //            break;
+                                //        }
+                                //    }
+                                //    else
+                                //    {
+                                //        //((Excel.Range)thisWS.Cells[r, c]).Interior.Color = Color.Red;
+                                //        thisWS.Cells[r, c].Interior.Color = Color.Red;
+
+                                //        //TODO: add row,column and heading to comment
+                                //        //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
+                                //        thisWS.Cells[r, c].AddComment("Tried to map CM category: " + thisWS.Cells[r, c].Value + " to SA category id - CM category not found in Category table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
+                                //    }
+
+
+
+                                //    reader2.Close();
+                                //}
+
+
+
+                            }
                 }
             }
+
+
+            //TODO: THIS ASSUMES YOU'LL ALWAYS STUFF LOT NUMBER, EVEN IF LOTS ALREADY SEQUENCED IN SA. PHASE II SHOULD PULL LOT NUMBERS FOR CHANGE IN CASE THEY WERE SEQUENCED
+            //Stuff Lot Numbers
+            int lotnbr = 990000;
+            int lotcol = 0;
+            for (int c = 1; c <= colCount; c++)
+            {
+                if (thisWS.Cells[1, c].Value == "LotNumber")
+                {
+                    lotcol = c;
+                    break;
+                }
+            }
+
+            if (lotcol != 0)
+            {
+                for (int r = 2; r <= rowCount; r++)
+                {
+                    thisWS.Cells[r, lotcol].Value = lotnbr;
+                    lotnbr += 1;
+                }
+            }
+
+
+
+
 
             Cursor.Current = Cursors.Default;
 
