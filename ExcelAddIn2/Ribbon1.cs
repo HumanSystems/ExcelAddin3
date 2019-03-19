@@ -122,7 +122,8 @@ namespace ExcelAddIn2
 
 
             //SqlConnection sqlConnection1 = new SqlConnection("Data Source=BACKUPDELL\\SQLEXPRESS ;Initial Catalog=SimpleAuction;Integrated Security=True");
-            SqlConnection sqlConnection1 = new SqlConnection("Data Source=BACKUPDELL ;Initial Catalog=Describing;Integrated Security=True");
+            //SqlConnection sqlConnection1 = new SqlConnection("Data Source=BACKUPDELL ;Initial Catalog=Describing;Integrated Security=True");
+            SqlConnection sqlConnection1 = new SqlConnection("Data Source=MANCINI-AWARE ;Initial Catalog=Describing;Integrated Security=True");
             SqlCommand cmd1 = new SqlCommand();
             cmd1.CommandType = CommandType.Text;
             cmd1.Connection = sqlConnection1;
@@ -438,7 +439,8 @@ namespace ExcelAddIn2
 
             //Set up connection for multiple queries
             //SqlConnection sqlConnection2 = new SqlConnection("Data Source=BACKUPDELL\\SQLEXPRESS ;Initial Catalog=SimpleAuction;Integrated Security=True");
-            SqlConnection sqlConnection2 = new SqlConnection("Data Source=BACKUPDELL;Initial Catalog=Describing;Integrated Security=True");
+            //SqlConnection sqlConnection2 = new SqlConnection("Data Source=BACKUPDELL;Initial Catalog=Describing;Integrated Security=True");
+            SqlConnection sqlConnection2 = new SqlConnection("Data Source=MANCINI-AWARE;Initial Catalog=Describing;Integrated Security=True");
             SqlCommand cmd2 = new SqlCommand();
             cmd2.CommandType = CommandType.Text;
             cmd2.Connection = sqlConnection2;
@@ -1011,45 +1013,48 @@ namespace ExcelAddIn2
                                 term = "";
                             }
 
-                            //string sub = input.Substring(0, 3);
-                            //Console.WriteLine("Substring: {0}", sub);
+                            string imgid = "";
+                            if (imgs.Count == 0){
+                                foreach (string s in imgs)
+                                {
+                                    cmd2.CommandText = "select id from symbol_reference where cmid = 'P' = '" + s + "'";    //mapping step stuffed CM value, so now re-map
+                                    reader2 = cmd2.ExecuteReader();
 
 
+                                    if (reader2.HasRows)
+                                    {
+                                        while (reader2.Read())
+                                        {
 
-                            //EbayCategoryId = "";
+                                            //CMCategoryTxt = reader2.GetString(1);
+                                            //SACategoryTxt = reader2.GetString(3);
+                                            //EBCategoryTxt = reader2.GetString(5);
 
-                            //cmd2.CommandText = "SELECT EBid FROM dbo.Category where CMCategoryTxt = '" + thisWS.Cells[r, c].Value + "'";    //mapping step stuffed CM value, so now re-map
-                            //reader2 = cmd2.ExecuteReader();
+                                            imgid = reader2.GetString(0);              //Note EBay id is string until further known
+                                            thisWS.Cells[r, c].Value = thisWS.Cells[r, c].Value + imgid + ";";
+                                            thisWS.Cells[r, c].Interior.Color = Color.Blue;     //assume it's not red alread because these was a value to lookup
+                                                                                                //break;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        //((Excel.Range)thisWS.Cells[r, c]).Interior.Color = Color.Red;
+                                        thisWS.Cells[r, c].Interior.Color = Color.Red;
 
+                                        //TODO: add row,column and heading to comment
+                                        //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
+                                        thisWS.Cells[r, c].ClearComments();
+                                        thisWS.Cells[r, c].AddComment("Tried to find image for CMid " +  s + " in table Symbol_Reference. CMid not found");
+                                        //thisWS.Cells[r, c].Comment[1].AutoFit = true;
+                                    }
 
-                            //if (reader2.HasRows)
-                            //{
-                            //    while (reader2.Read())
-                            //    {
+                                    reader2.Close();
+                                }
+                            }
 
-                            //        //CMCategoryTxt = reader2.GetString(1);
-                            //        //SACategoryTxt = reader2.GetString(3);
-                            //        //EBCategoryTxt = reader2.GetString(5);
+                                //string sub = input.Substring(0, 3);
+                                //Console.WriteLine("Substring: {0}", sub);
 
-                            //        EbayCategoryId = reader2.GetString(0);              //Note EBay id is string until further known
-                            //        thisWS.Cells[r, c].Value = EbayCategoryId;
-                            //        thisWS.Cells[r, c].Interior.Color = Color.Blue;     //assume it's not red alread because these was a value to lookup
-                            //                                                            //break;
-                            //    }
-                            //}
-                            //else
-                            //{
-                            //    //((Excel.Range)thisWS.Cells[r, c]).Interior.Color = Color.Red;
-                            //    thisWS.Cells[r, c].Interior.Color = Color.Red;
-
-                            //    //TODO: add row,column and heading to comment
-                            //    //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
-                            //    thisWS.Cells[r, c].ClearComments();
-                            //    thisWS.Cells[r, c].AddComment("Tried to map CM category: " + thisWS.Cells[r, c].Value + " to EBay category id - CM category not found in Category table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
-                            //    //thisWS.Cells[r, c].Comment[1].AutoFit = true;
-                            //}
-
-                            //reader2.Close();
                         }
 
                         else if (thisWS.Cells[1, c].Value == "EbaySecondaryCategoryId" && EBayImplemented)
@@ -1128,6 +1133,11 @@ namespace ExcelAddIn2
                                 //request.AddXmlBody(f);
 
                                 IRestResponse response = client.Execute(request);
+
+                                if (!response.IsSuccessful)
+                                {
+                                    Debug.WriteLine("reponse failed");
+                                }
 
                                 JObject obj1 = JObject.Parse(response.Content);
                                 //JArray SAInventoryId = (JArray)obj1["inventoryid"];
@@ -1249,7 +1259,8 @@ namespace ExcelAddIn2
 
             //TODO: THIS ASSUMES YOU'LL ALWAYS STUFF LOT NUMBER, EVEN IF LOTS ALREADY SEQUENCED IN SA. PHASE II SHOULD PULL LOT NUMBERS FOR CHANGE IN CASE THEY WERE SEQUENCED
             //Stuff Lot Numbers
-            int lotnbr = 990000;
+            string desc = "";
+            //int lotnbr = 990000;
             int lotcol = 0;
             for (int c = 1; c <= colCount; c++)
             {
@@ -1260,12 +1271,61 @@ namespace ExcelAddIn2
                 }
             }
 
-            if (lotcol != 0)
+            int desccol = 0;
+            for (int c = 1; c <= colCount; c++)
+            {
+                if (thisWS.Cells[1, c].Value == "Description")
+                {
+                    desccol = c;
+                    break;
+                }
+            }
+
+            if (lotcol != 0 && desccol != 0)
             {
                 for (int r = 2; r <= rowCount; r++)
                 {
-                    thisWS.Cells[r, lotcol].Value = lotnbr;
-                    lotnbr += 1;
+                    //thisWS.Cells[r, lotcol].Value = lotnbr;
+                    //lotnbr += 1;
+
+                    desc = "";
+
+                    cmd2.CommandText = "select descrip from SAN_Sale_Data  where LOT_NO = '" + thisWS.Cells[r, lotcol].Value + "'";    //mapping step stuffed CM value, so now re-map
+                    reader2 = cmd2.ExecuteReader();
+                    
+                    if (reader2.HasRows)
+                    {
+                        while (reader2.Read())
+                        {
+
+                            //CMCategoryTxt = reader2.GetString(1);
+                            //SACategoryTxt = reader2.GetString(3);
+                            //EBCategoryTxt = reader2.GetString(5);
+
+                            desc = reader2.GetString(0);              //Note EBay id is string until further known
+                            thisWS.Cells[r, desccol].Value = desc;
+                            thisWS.Cells[r, desccol].Interior.Color = Color.Blue;     //assume it's not red alread because these was a value to lookup
+                                                                                //break;
+                        }
+                    }
+                    else
+                    {
+                        //((Excel.Range)thisWS.Cells[r, c]).Interior.Color = Color.Red;
+                        thisWS.Cells[r, desccol].Interior.Color = Color.Red;
+
+                        //TODO: add row,column and heading to comment
+                        //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
+                        thisWS.Cells[r, desccol].ClearComments();
+                        thisWS.Cells[r, desccol].AddComment("Tried to find description DESCRIP in the SAN data for this lots: " + thisWS.Cells[r, lotcol].Value );
+                        //thisWS.Cells[r, c].Comment[1].AutoFit = true;
+                    }
+
+                    reader2.Close();
+
+
+
+
+
                 }
             }
 
