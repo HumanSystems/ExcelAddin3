@@ -92,7 +92,7 @@ namespace ExcelAddIn2
             //TODO: INTERCEPT FILE SAVE/CLOSE SO WARN ABOUT SAVE BAD FILE?
             OpenFileDialog openFileDialog1 = new OpenFileDialog();
             //openFileDialog1.Filter = "Excel Files|*.xls";   //TODO: ADD xlsx filter
-            openFileDialog1.Filter = "xls Files|*.xls|xlsx Files|*.xlsx";
+            openFileDialog1.Filter = "xlsx Files|*.xlsx|xls Files|*.xls";
             openFileDialog1.Title = "Select Catalog Master Lot Files to format for Simple Auction";
             openFileDialog1.Multiselect = true;
             string filename;
@@ -249,12 +249,6 @@ namespace ExcelAddIn2
                 //excelApp.StatusBar = String.Format("Processing line {0} on {1}.",rows,rowNum);
                 Globals.ThisAddIn.Application.StatusBar = String.Format("Loading file {0}: {1}", filecount + 1, openFileDialog1.SafeFileNames[filecount]);
 
-                //TODO: CHECK DATA BY COLUMN AS IMPORT
-
-                //****************************************************************************************************************************************************
-                //* after 1) IMPORT AND 2) GRAB SA/EBAY CATEGORY IDS FROM MAPPING AND 3) APPLY BUSINESS RULES FOR SUB-CATEGORY SORT FIELDS 4) GRAB CONSIGNOR, SALE#  
-                //TODO: CRITICAL - GRA
-
                 //%%%%%%%%%%%%%%% START LOOP HERE
 
                 //*var fromXlApp = new Excel.Application();
@@ -351,7 +345,7 @@ namespace ExcelAddIn2
                         CMHeadCol = 0;
                     }
                     else
-                            if (map.SAHead != "" && map.CMHead == "" && map.defaultValue != "")  //otherwise, if there is a default value stuff it into the sa column
+                    if (map.SAHead != "" && map.CMHead == "" && map.defaultValue != "")  //otherwise, if there is a default value stuff it into the sa column
                     {
                         //NOTE: Default value will trump mapping
                         for (int i = 1; i < 256; i++)
@@ -505,7 +499,7 @@ namespace ExcelAddIn2
             //*********************************************************************************************************************************************************
             //* Edit for required fields first
             //*********************************************************************************************************************************************************
-            System.Type type;
+            //System.Type type;
 
             for (int r = 2; r <= rowCount; r++) {
                 for (int c = 1; c <= colCount; c++) {
@@ -1014,10 +1008,35 @@ namespace ExcelAddIn2
                             }
 
                             string imgid = "";
-                            if (imgs.Count == 0){
+                            string origimg = "";
+                            if (imgs.Count > 0){
+
+                                origimg = thisWS.Cells[r, c].Value;
+                                thisWS.Cells[r, c].Value = ""; //clear out value
+                                thisWS.Cells[r, c].ClearComments();
+                                thisWS.Cells[r, c].AddComment("Original condition before xform: " + origimg);
+
+
                                 foreach (string s in imgs)
                                 {
-                                    cmd2.CommandText = "select id from symbol_reference where cmid = 'P' = '" + s + "'";    //mapping step stuffed CM value, so now re-map
+
+                                    /*
+                                    Number sign &#36; 
+                                    Dollar sign &#37; 
+                                    Percent sign &#38; 
+                                    Ampersand &#39; 
+                                    Apostrophe &#40; 
+                                    Left parenthesis &#41; *******
+                                    Right parenthesis &#42; 
+                                    Asterisk &#43;
+                                    */
+
+                                    if (s == "&#41")
+                                    {
+                                        continue;
+                                    }
+
+                                    cmd2.CommandText = "select id from symbol_reference where cmid = '" + s + "'";    //mapping step stuffed CM value, so now re-map
                                     reader2 = cmd2.ExecuteReader();
 
 
@@ -1305,7 +1324,7 @@ namespace ExcelAddIn2
                             desc = reader2.GetString(0);              //Note EBay id is string until further known
                             thisWS.Cells[r, desccol].Value = desc;
                             thisWS.Cells[r, desccol].Interior.Color = Color.Blue;     //assume it's not red alread because these was a value to lookup
-                                                                                //break;
+
                         }
                     }
                     else
