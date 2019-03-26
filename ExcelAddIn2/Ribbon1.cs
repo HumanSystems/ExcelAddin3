@@ -1031,7 +1031,7 @@ namespace ExcelAddIn2
                                     Asterisk &#43;
                                     */
 
-                                    if (s == "&#41")
+                                    if (s == "&#41" || s == "&#41;")
                                     {
                                         continue;
                                     }
