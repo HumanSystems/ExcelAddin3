@@ -36,6 +36,7 @@
         {
             this.tabSA = this.Factory.CreateRibbonTab();
             this.grpLotMgt = this.Factory.CreateRibbonGroup();
+            this.btnLoadAMS = this.Factory.CreateRibbonButton();
             this.btnLoadCatMast = this.Factory.CreateRibbonButton();
             this.btnVerify = this.Factory.CreateRibbonButton();
             this.tabSA.SuspendLayout();
@@ -51,14 +52,21 @@
             // 
             // grpLotMgt
             // 
+            // 
+            this.grpLotMgt.Items.Add(this.btnLoadAMS);
             this.grpLotMgt.Items.Add(this.btnLoadCatMast);
             this.grpLotMgt.Items.Add(this.btnVerify);
             this.grpLotMgt.Label = "Lot Mgt";
             this.grpLotMgt.Name = "grpLotMgt";
             // 
+
+            this.btnLoadAMS.Label = "Load AMS";
+            this.btnLoadAMS.Name = "btnLoadAMS";
+            this.btnLoadAMS.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btnLoadAMS_Click);
+
             // btnLoadCatMast
             // 
-            this.btnLoadCatMast.Label = "Load Cat Mast";
+            this.btnLoadCatMast.Label = "Load SimpleAuction";
             this.btnLoadCatMast.Name = "btnLoadCatMast";
             this.btnLoadCatMast.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btnLoadCatMast_Click);
             // 
@@ -86,6 +94,7 @@
 
         internal Microsoft.Office.Tools.Ribbon.RibbonTab tabSA;
         internal Microsoft.Office.Tools.Ribbon.RibbonGroup grpLotMgt;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton btnLoadAMS;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton btnLoadCatMast;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton btnVerify;
     }
