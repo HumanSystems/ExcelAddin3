@@ -1,0 +1,13 @@
+
+
+microsoft excel is waiting for another application to complete an ole action
+
+
+
+3: How to fix the “Excel is waiting for OLE” issue
+Open the Excel sheet.
+Go to the File menu.
+Click on Options.
+Go to the Advanced tab.
+Scroll down to the General area and check “Ignore other applications that use Dynamic Data Exchange (DDE)”
+Restart Excel.

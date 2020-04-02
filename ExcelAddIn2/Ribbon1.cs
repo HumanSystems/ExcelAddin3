@@ -42,7 +42,11 @@ namespace ExcelAddIn2
         }
 
         public const bool EBayImplemented = false;
-
+        
+        //define exterbnal function to get excel app process id as needed to kill zombie processes when using interop
+        //see https://stackoverflow.com/questions/8490564/getting-excel-application-process-id
+        [DllImport("user32.dll")]
+        static extern int GetWindowThreadProcessId(int hWnd, out int lpdwProcessId);
 
         //******************************************************************************************************************************************
         //Get reference to current sheet (with add-in) that will hold resulting SA Lot file
@@ -80,6 +84,8 @@ namespace ExcelAddIn2
             }
 
 
+            MessageBox.Show("For pause - before open file dialog box");
+
             //1)BUILD ARRAY/INDEX OF EXCEL SA HEADING TO CM HEADING AND POPULATE SA HEADING FROM DATABASE
 
             //******************************************************************************************************************************************************
@@ -97,6 +103,9 @@ namespace ExcelAddIn2
             openFileDialog1.Title = "Select Catalog Master Lot Files to format for Simple Auction";
             openFileDialog1.Multiselect = true;
             string filename;
+
+            MessageBox.Show("For pause - after open file dialog box");
+
 
             //Open file selection dialog - if canceled out just return. Otherwise perform all processing to suck in the selected Catalog Master 
             //lot export file
@@ -240,6 +249,9 @@ namespace ExcelAddIn2
             int filecount = 0;
             //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
+            MessageBox.Show("opened spreadsheet - now processing fields");
+
+
             foreach (string fn in openFileDialog1.FileNames)
             {
 
@@ -247,7 +259,7 @@ namespace ExcelAddIn2
                 //TODO: CHECK FILE NAME BEFORE OPENING AGAINST ??? TO MAKE SURE IT'S AN ?UNPROCESSED? ?NEW? ?WELL-NAMED? CATALOG MASTER FILE
                 //filename = openFileDialog1.FileName;
                 filename = fn;
-                MessageBox.Show("For pause - here is file name about to process: " + filename);
+                MessageBox.Show("For pauseIII - here is file name about to process: " + filename);
 
                 //excelApp.StatusBar = String.Format("Processing line {0} on {1}.",rows,rowNum);
                 Globals.ThisAddIn.Application.StatusBar = String.Format("Loading file {0}: {1}", filecount + 1, openFileDialog1.SafeFileNames[filecount]);
@@ -262,7 +274,7 @@ namespace ExcelAddIn2
                 fromXlRange = fromXlWorksheet.UsedRange;
 
 
-                //MessageBox.Show("CM (from) file should be open now ... begin data map/load from CM to current SA lot spreadsheet");
+                MessageBox.Show("CM (from) file should be open now ... begin data map/load from CM to current SA lot spreadsheet");
                 //Globals.ThisAddIn.Application.StatusBar = "processing file";
                 Cursor.Current = Cursors.Hand;
 
@@ -313,6 +325,8 @@ namespace ExcelAddIn2
                 //SEE IF ANY HEADINGS ARE MAPPED FOR THIS "TO" ROW
                 foreach (OneColumnMap map in headingsMap)
                 {
+                    MessageBox.Show("in foreach for file: " + filename);
+
                     if (map.SAHead != "" && map.CMHead == "" && map.defaultValue == "")
                     {
                         continue;
@@ -387,8 +401,12 @@ namespace ExcelAddIn2
                 //Marshal.ReleaseComObject(fromXlWorksheet);
 
                 //close and release
+                MessageBox.Show("about to close from spreadsheet");
+
                 fromXlWorkbook.Close();
                 //Marshal.ReleaseComObject(fromXlWorkbook);
+
+                MessageBox.Show("about to quit from spreadsheet");
 
                 //quit and release
                 fromXlApp.Quit();
@@ -614,6 +632,9 @@ namespace ExcelAddIn2
                 fromXlApp.Visible = false; //--> Don't need to see the Catalog Master excel file to suck it in
 
                 fromXlWorkbook = fromXlApp.Workbooks.Open(filename);     //this is the fully qualified (local) file name
+
+                Process fromPid = GetExcelProcess(fromXlApp);
+
                 fromXlWorksheet = fromXlWorkbook.Sheets[1];            //TODO: make sure only one worksheet???
                 fromXlRange = fromXlWorksheet.UsedRange;
 
@@ -740,15 +761,41 @@ namespace ExcelAddIn2
 
                 //release com objects to fully kill excel process from running in the background
                 //Marshal.ReleaseComObject(fromXlRange);
-                //Marshal.ReleaseComObject(fromXlWorksheet);
+                //Marshal.ReleaseComObject(fromXlWorksheet);  ---> if you do this then workbook.close() fails
+                // Marshal.ReleaseComObject(fromXlApp);
 
+                ///****************************************OLD WAY*************************************
                 //close and release
-                fromXlWorkbook.Close();
-                //Marshal.ReleaseComObject(fromXlWorkbook);
+                //fromXlWorkbook.Close();
 
                 //quit and release
+                //fromXlApp.Quit();
+                ///****************************************OLD WAY*************************************
+
+
+
+
+                //****************************************new way *************************************
+                // Get rid of everything - close Excel
+                while (Marshal.ReleaseComObject(fromXlWorkbook) > 0) { }
+                fromXlWorkbook = null;
+                //while (Marshal.ReleaseComObject(sheets) > 0) { }
+                //sheets = null;
+                while (Marshal.ReleaseComObject(fromXlWorksheet) > 0) { }
+                fromXlWorksheet = null;
+                while (Marshal.ReleaseComObject(fromXlRange) > 0) { }
+                fromXlRange = null;
+                GC();
                 fromXlApp.Quit();
-                // Marshal.ReleaseComObject(fromXlApp);
+                while (Marshal.ReleaseComObject(fromXlApp) > 0) { }
+                fromXlApp = null;
+                GC();
+
+
+                fromPid.Kill();  //this is needed to get rid of zombie excel processes, so from excel isn't locked for editing after app closes
+
+
+                //****************************************new way *************************************
 
                 filecount += 1;
 
@@ -766,12 +813,27 @@ namespace ExcelAddIn2
 
             Globals.ThisAddIn.Application.StatusBar = String.Format("All Catalog Master files are loaded and Validation is complete");
 
-            Cursor.Current = Cursors.Default;   //TODO: HOW TO CLEAN UP ALL EXCEL OBJECTS
+            Cursor.Current = Cursors.Default;   
         }
 
 
-        //git change again
-        
+        public static void GC()
+        {
+            System.GC.Collect();
+            System.GC.WaitForPendingFinalizers();
+            System.GC.Collect();
+            System.GC.WaitForPendingFinalizers();
+        }
+
+        //see https://stackoverflow.com/questions/8490564/getting-excel-application-process-id
+        Process GetExcelProcess(Excel.Application excelApp)
+        {
+            int id;
+            GetWindowThreadProcessId(excelApp.Hwnd, out id);
+            return Process.GetProcessById(id);
+        }
+
+
         private void ValidateSpreadsheet()
         {
             //((Excel.Range) thisWS.Cells[r, map.SAPosition]).Value = (fromXlRange.Cells[r, map.CMPosition].Value); //THIS IS WHERE VALUE GET'S MOVED!!!
