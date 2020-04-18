@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using System.Data;
 using System.Data.SqlClient;
 using System.Collections;
+using System.Xaml;
 
 using System.Drawing;
 
@@ -42,7 +43,7 @@ namespace ExcelAddIn2
         }
 
         public const bool EBayImplemented = false;
-        
+
         //define exterbnal function to get excel app process id as needed to kill zombie processes when using interop
         //see https://stackoverflow.com/questions/8490564/getting-excel-application-process-id
         [DllImport("user32.dll")]
@@ -62,6 +63,7 @@ namespace ExcelAddIn2
 
         }
 
+        //This is not being used - just kept using LoadAMS as this program is throwaway
         private void btnLoadAMS_Click(object sender, RibbonControlEventArgs e)
         {
 
@@ -591,7 +593,7 @@ namespace ExcelAddIn2
 
 
             //TODO: NEED TO EDIT SOURCE? I.E. CERT BODY WITH NO GRADE OR YEAR?
-            
+
 
             //TODO: YOU MAY WANT TO LEAVE THIS CONNECTION OPEN IF STORING STUFF IN DB
             reader1.Close();
@@ -813,7 +815,7 @@ namespace ExcelAddIn2
 
             Globals.ThisAddIn.Application.StatusBar = String.Format("All Catalog Master files are loaded and Validation is complete");
 
-            Cursor.Current = Cursors.Default;   
+            Cursor.Current = Cursors.Default;
         }
 
 
@@ -843,7 +845,7 @@ namespace ExcelAddIn2
             Cursor.Current = Cursors.WaitCursor;
 
             Excel.Worksheet thisWS = (Excel.Worksheet)Globals.ThisAddIn.Application.ActiveSheet;
-            
+
             //*****************************************************************************************************************************************************
             //* Load up the database driven mapped fields: categor, sale, consignor, consignment
             //****************************************************************************************************************************************************
@@ -864,7 +866,7 @@ namespace ExcelAddIn2
             SqlDataReader reader2;
 
 
-            
+
             //TODO: MAKE SURE GETTING LAST ROW AND LAST COLUMN
 
             //****************************************************************************************************************************************************************************
@@ -883,7 +885,7 @@ namespace ExcelAddIn2
                 {
                     //reqSaColNbr.Add(map.SAPosition);
                     reqSaColName.Add(map.SAHead);
-                 
+
                 }
             }
 
@@ -922,25 +924,29 @@ namespace ExcelAddIn2
             //*********************************************************************************************************************************************************
             //System.Type type;
 
-            for (int r = 2; r <= rowCount; r++) {
-                for (int c = 1; c <= colCount; c++) {
+            for (int r = 2; r <= rowCount; r++)
+            {
+                for (int c = 1; c <= colCount; c++)
+                {
                     //value = thisWS.Cells[r, c].Value;
                     //valueint = 0;
                     //o = Int32.TryParse(value, out valueint);
 
-                  
-                    foreach (string reqSAName in reqSaColName) {
+
+                    foreach (string reqSAName in reqSaColName)
+                    {
                         //value = thisWS.Cells[r, c].Value;
                         //if ((c == reqSACol) && ((thisWS.Cells[r, c].Value == null) || (valueint == 0))) {
 
                         //TODO --> type = (thisWS.Cells[r, c].Value).GetType;  //TODO: NEED TO CHECK FOR 0 IN SOME FIELDS I.E. SEQUENCE NBR
-                        if (thisWS.Cells[1, c].Value == reqSAName && thisWS.Cells[r, c].Value == null) {
+                        if (thisWS.Cells[1, c].Value == reqSAName && thisWS.Cells[r, c].Value == null)
+                        {
                             ((Excel.Range)thisWS.Cells[r, c]).Interior.Color = Color.Red;
 
                             //TODO: add row,column and heading to comment
                             String txt = thisWS.Cells[1, c].Value;
                             thisWS.Cells[r, c].ClearComments();
-                            thisWS.Cells[r, c].AddComment( txt + " is required") ;
+                            thisWS.Cells[r, c].AddComment(txt + " is required");
                             //((Excel.Range)ws.Cells[r, c]).Style.Name = "Normal"
                         }
                     }
@@ -962,10 +968,12 @@ namespace ExcelAddIn2
             int SAShippingCategoryId = 0;
 
             //Check fields that require database mapping by ID
-            for (int r = 2; r <= rowCount; r++) {
-                for (int c = 1; c <= colCount; c++) {
-                        if ((thisWS.Cells[1, c].Value != null) && (thisWS.Cells[r, c].Value != null))   //mapped columns are required so will be red if not provided
-                        {
+            for (int r = 2; r <= rowCount; r++)
+            {
+                for (int c = 1; c <= colCount; c++)
+                {
+                    if ((thisWS.Cells[1, c].Value != null) && (thisWS.Cells[r, c].Value != null))   //mapped columns are required so will be red if not provided
+                    {
                         //((Excel.Range)ws.Cells[r, c]).NumberFormat = format;
                         //((Excel.Range)ws.Cells[r, c]).Value2 = cellVal;
                         //((Excel.Range)thisWS.Cells[r, reqSaColNbr[c]]).Interior.Color = ColorTranslator.ToOle(Color.Red);
@@ -1133,7 +1141,7 @@ namespace ExcelAddIn2
                         else if (thisWS.Cells[1, c].Value == "ConsignmentTrackingId")
                         {
                             SAConsignmentId = 0;
-                            
+
 
                             cmd2.CommandText = "SELECT SAId FROM dbo.Consignment where CMId = '" + thisWS.Cells[r, c].Value + "'";    //mapping step stuffed CM value, so now re-map
                             reader2 = cmd2.ExecuteReader();
@@ -1361,14 +1369,14 @@ namespace ExcelAddIn2
                         {
                             string symbols = thisWS.Cells[r, c].Value;
                             var imgs = new List<string>();
-               
+
 
                             int i = 0;
                             while ((i = symbols.IndexOf("img", i)) != -1)
                             {
                                 // Print out the substring.
                                 //Console.WriteLine("row: {0} has {1} in position {2}", r, symbols.Substring(i,3), i);
-                                Debug.WriteLine("row: {0} has {1} in position {2}", r, symbols.Substring(i,3), i);
+                                Debug.WriteLine("row: {0} has {1} in position {2}", r, symbols.Substring(i, 3), i);
 
                                 //<img src="http://www.kelleherauctions.com/images/mint.gif" align="top">
                                 string imgname = "";
@@ -1413,7 +1421,7 @@ namespace ExcelAddIn2
                                 {
                                     inbracket = false;
                                 }
-                                else 
+                                else
                                     if (!inbracket && ch != '/')
                                 {
                                     term += ch;
@@ -1430,7 +1438,8 @@ namespace ExcelAddIn2
 
                             string imgid = "";
                             string origimg = "";
-                            if (imgs.Count > 0){
+                            if (imgs.Count > 0)
+                            {
 
                                 origimg = thisWS.Cells[r, c].Value;
                                 thisWS.Cells[r, c].Value = ""; //clear out value
@@ -1484,7 +1493,7 @@ namespace ExcelAddIn2
                                         //TODO: add row,column and heading to comment
                                         //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
                                         thisWS.Cells[r, c].ClearComments();
-                                        thisWS.Cells[r, c].AddComment("Tried to find image for CMid " +  s + " in table Symbol_Reference. CMid not found");
+                                        thisWS.Cells[r, c].AddComment("Tried to find image for CMid " + s + " in table Symbol_Reference. CMid not found");
                                         //thisWS.Cells[r, c].Comment[1].AutoFit = true;
                                     }
 
@@ -1492,8 +1501,8 @@ namespace ExcelAddIn2
                                 }
                             }
 
-                                //string sub = input.Substring(0, 3);
-                                //Console.WriteLine("Substring: {0}", sub);
+                            //string sub = input.Substring(0, 3);
+                            //Console.WriteLine("Substring: {0}", sub);
 
                         }
 
@@ -1646,53 +1655,53 @@ namespace ExcelAddIn2
                             }
                         }
 
-                        
 
 
 
 
-                                //**** Map Consignor Id ****
-                                //if (thisWS.Cells[1, c].Value == "CategoryId")
-                                //{
-                                //    SACategoryId = 0;
 
-                                //    cmd2.CommandText = "SELECT * FROM dbo.Category where CMCategoryTxt = '" + thisWS.Cells[r, c].Value + "'";    //mapping step stuffed CM value, so now re-map
-                                //    reader2 = cmd2.ExecuteReader();
+                        //**** Map Consignor Id ****
+                        //if (thisWS.Cells[1, c].Value == "CategoryId")
+                        //{
+                        //    SACategoryId = 0;
 
-
-                                //    if (reader2.HasRows)
-                                //    {
-                                //        while (reader2.Read())
-                                //        {
-
-                                //            //CMCategoryTxt = reader2.GetString(1);
-                                //            //SACategoryTxt = reader2.GetString(3);
-                                //            //EBCategoryTxt = reader2.GetString(5);
-
-                                //            SACategoryId = reader2.GetInt32(0);         //assume it's not red alread because these was a value to lookup
-                                //            thisWS.Cells[r, c].Value = SACategoryId;
-                                //            thisWS.Cells[r, c].Interior.Color = Color.Blue;
-                                //            break;
-                                //        }
-                                //    }
-                                //    else
-                                //    {
-                                //        //((Excel.Range)thisWS.Cells[r, c]).Interior.Color = Color.Red;
-                                //        thisWS.Cells[r, c].Interior.Color = Color.Red;
-
-                                //        //TODO: add row,column and heading to comment
-                                //        //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
-                                //        thisWS.Cells[r, c].AddComment("Tried to map CM category: " + thisWS.Cells[r, c].Value + " to SA category id - CM category not found in Category table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
-                                //    }
+                        //    cmd2.CommandText = "SELECT * FROM dbo.Category where CMCategoryTxt = '" + thisWS.Cells[r, c].Value + "'";    //mapping step stuffed CM value, so now re-map
+                        //    reader2 = cmd2.ExecuteReader();
 
 
+                        //    if (reader2.HasRows)
+                        //    {
+                        //        while (reader2.Read())
+                        //        {
 
-                                //    reader2.Close();
-                                //}
+                        //            //CMCategoryTxt = reader2.GetString(1);
+                        //            //SACategoryTxt = reader2.GetString(3);
+                        //            //EBCategoryTxt = reader2.GetString(5);
+
+                        //            SACategoryId = reader2.GetInt32(0);         //assume it's not red alread because these was a value to lookup
+                        //            thisWS.Cells[r, c].Value = SACategoryId;
+                        //            thisWS.Cells[r, c].Interior.Color = Color.Blue;
+                        //            break;
+                        //        }
+                        //    }
+                        //    else
+                        //    {
+                        //        //((Excel.Range)thisWS.Cells[r, c]).Interior.Color = Color.Red;
+                        //        thisWS.Cells[r, c].Interior.Color = Color.Red;
+
+                        //        //TODO: add row,column and heading to comment
+                        //        //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
+                        //        thisWS.Cells[r, c].AddComment("Tried to map CM category: " + thisWS.Cells[r, c].Value + " to SA category id - CM category not found in Category table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
+                        //    }
 
 
 
-                            }
+                        //    reader2.Close();
+                        //}
+
+
+
+                    }
                 }
             }
 
@@ -1732,7 +1741,7 @@ namespace ExcelAddIn2
 
                     cmd2.CommandText = "select descrip from SAN_Sale_Data  where LOT_NO = '" + thisWS.Cells[r, lotcol].Value + "'";    //mapping step stuffed CM value, so now re-map
                     reader2 = cmd2.ExecuteReader();
-                    
+
                     if (reader2.HasRows)
                     {
                         while (reader2.Read())
@@ -1756,7 +1765,7 @@ namespace ExcelAddIn2
                         //TODO: add row,column and heading to comment
                         //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
                         thisWS.Cells[r, desccol].ClearComments();
-                        thisWS.Cells[r, desccol].AddComment("Tried to find description DESCRIP in the SAN data for this lots: " + thisWS.Cells[r, lotcol].Value );
+                        thisWS.Cells[r, desccol].AddComment("Tried to find description DESCRIP in the SAN data for this lots: " + thisWS.Cells[r, lotcol].Value);
                         //thisWS.Cells[r, c].Comment[1].AutoFit = true;
                     }
 
@@ -2746,6 +2755,14 @@ namespace ExcelAddIn2
             MessageBox.Show("You hit the verify button");
 
 
+
+        }
+
+        private void btnSelectCategory_Click_1(object sender, RibbonControlEventArgs e)
+        {
+            //MessageBox.Show("da fuck!");
+            var form1 = new Form1();
+            form1.Show();
 
         }
     }

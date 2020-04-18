@@ -38,6 +38,7 @@
             this.grpLotMgt = this.Factory.CreateRibbonGroup();
             this.btnLoadCatMast = this.Factory.CreateRibbonButton();
             this.btnVerify = this.Factory.CreateRibbonButton();
+            this.btnSelectCategory = this.Factory.CreateRibbonButton();
             this.tabSA.SuspendLayout();
             this.grpLotMgt.SuspendLayout();
             this.SuspendLayout();
@@ -53,6 +54,7 @@
             // 
             this.grpLotMgt.Items.Add(this.btnLoadCatMast);
             this.grpLotMgt.Items.Add(this.btnVerify);
+            this.grpLotMgt.Items.Add(this.btnSelectCategory);
             this.grpLotMgt.Label = "Lot Mgt";
             this.grpLotMgt.Name = "grpLotMgt";
             // 
@@ -67,6 +69,12 @@
             this.btnVerify.Label = "Verify Data";
             this.btnVerify.Name = "btnVerify";
             this.btnVerify.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btnVerify_Click_1);
+            // 
+            // btnSelectCategory
+            // 
+            this.btnSelectCategory.Label = "Select category for filter";
+            this.btnSelectCategory.Name = "btnSelectCategory";
+            this.btnSelectCategory.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btnSelectCategory_Click_1);
             // 
             // Ribbon1
             // 
@@ -89,6 +97,7 @@
         //internal Microsoft.Office.Tools.Ribbon.RibbonButton btnLoadAMS;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton btnLoadCatMast;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton btnVerify;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton btnSelectCategory;
     }
 
     partial class ThisRibbonCollection
