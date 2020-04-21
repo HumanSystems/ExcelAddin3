@@ -614,7 +614,6 @@ namespace ExcelAddIn2
             int colCount;
 
             int filecount = 0;
-            //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
             foreach (string fn in openFileDialog1.FileNames)
             {
@@ -2760,6 +2759,15 @@ namespace ExcelAddIn2
 
         private void btnSelectCategory_Click_1(object sender, RibbonControlEventArgs e)
         {
+            Excel.Worksheet thisWS = (Excel.Worksheet)Globals.ThisAddIn.Application.ActiveSheet;
+
+
+            if (!thisWS.AutoFilterMode)
+            {
+                MessageBox.Show("Autofilter must be on to assign category codes ");
+                return;
+            }
+
             //MessageBox.Show("da fuck!");
             var form1 = new Form1();
             form1.Show();
