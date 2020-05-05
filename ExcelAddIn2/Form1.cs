@@ -31,9 +31,9 @@ namespace ExcelAddIn2
         {
 
 
-            Excel.Range visibleCells = thisWS.UsedRange.SpecialCells(
-                               Excel.XlCellType.xlCellTypeVisible,
-                               Type.Missing);
+            //Excel.Range visibleCells = thisWS.UsedRange.SpecialCells(
+            //                   Excel.XlCellType.xlCellTypeVisible,
+            //                   Type.Missing);
 
 
             
@@ -421,11 +421,28 @@ namespace ExcelAddIn2
 
 
 
-            Excel.Range thisRange = thisWS.UsedRange.SpecialCells(
-                               Excel.XlCellType.xlCellTypeVisible,
-                               Type.Missing);
+            //Excel.Range thisRange = thisWS.UsedRange.SpecialCells(
+            //                   Excel.XlCellType.xlCellTypeVisible,
+            ////                   Type.Missing);
+            //Excel.Range thisRange = thisWS.UsedRange.Cells(
+            //                  Excel.XlCellType.xlCellTypeVisible,
+            //                  Type.Missing);
+
+
+
+            //Excel.Range thisRange = thisWS.UsedRange.SpecialCells(Excel.XlCellType.xlCellTypeVisible);
+            var thisRange = thisWS.UsedRange.SpecialCells(Excel.XlCellType.xlCellTypeVisible);
+
+           
+
+
+
             int thisRowCount = thisRange.Rows.Count;
             int thisColCount = thisRange.Columns.Count;
+
+    
+
+
 
             int categoryColumn = 9999999;
 
@@ -477,20 +494,40 @@ namespace ExcelAddIn2
             //    }
             //}
 
-            for (int r = 2; r <= thisRowCount; r++)
+
+            foreach (Excel.Range area in thisRange.Areas)
             {
-                if (thisRange.Cells[r, categoryColumn].Value != null)
+                foreach (Excel.Range row in area.Rows)
                 {
-                    //MessageBox.Show(String.Format("Cell value: {0} Rownumber: {1} Columnnumber: {2}", thisRange.Cells[r, categoryColumn].Value, r.ToString(), categoryColumn.ToString()));
+                    // Process each un-filtered, visible row here.
+                    int index = row.Row;
+                    //MessageBox.Show("Here is row: " + row.Cells[index, categoryColumn].Value + "  Here is sheet: " + thisWS.Cells[index, categoryColumn].Value);
 
-                    thisRange.Cells[r, categoryColumn].ClearComments();
-                    thisRange.Cells[r, categoryColumn].AddComment("[Category code] Name" + textCategoryName.Text + " specified by user");
+                    if (index != 1)
+                    {
+                        thisWS.Cells[index, categoryColumn].ClearComments();
+                        thisWS.Cells[index, categoryColumn].AddComment("[Category code] Name" + textCategoryName.Text + " specified by user");
 
-                    thisRange.Cells[r, categoryColumn].Interior.Color = Color.Blue;
-                    thisRange.Cells[r, categoryColumn].Value = textCategoryCode.Text;
-
+                        thisWS.Cells[index, categoryColumn].Interior.Color = Color.Blue;
+                        thisWS.Cells[index, categoryColumn].Value = textCategoryCode.Text;
+                    }
                 }
             }
+
+            //for (int r = 2; r <= thisRowCount; r++)
+            //{
+            //    //if (thisRange.Cells[r, categoryColumn].Value != null)
+            //    //{
+            //        //MessageBox.Show(String.Format("Cell value: {0} Rownumber: {1} Columnnumber: {2}", thisRange.Cells[r, categoryColumn].Value, r.ToString(), categoryColumn.ToString()));
+
+            //        thisRange.Cells[r, categoryColumn].ClearComments();
+            //        thisRange.Cells[r, categoryColumn].AddComment("[Category code] Name" + textCategoryName.Text + " specified by user");
+
+            //        thisRange.Cells[r, categoryColumn].Interior.Color = Color.Blue;
+            //        thisRange.Cells[r, categoryColumn].Value = textCategoryCode.Text;
+
+            //    //}
+            //}
 
 
 
