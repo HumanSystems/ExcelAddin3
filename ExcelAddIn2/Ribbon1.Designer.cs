@@ -60,19 +60,19 @@
             // 
             // btnLoadCatMast
             // 
-            this.btnLoadCatMast.Label = "Load AMS";
+            this.btnLoadCatMast.Label = "1) (Re)Create AMS Spreadsheet from CM Spreadsheet";
             this.btnLoadCatMast.Name = "btnLoadCatMast";
             this.btnLoadCatMast.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btnLoadCatMast_Click);
             // 
             // btnVerify
             // 
-            this.btnVerify.Label = "Verify Data";
+            this.btnVerify.Label = "2) (Re)Verify Data";
             this.btnVerify.Name = "btnVerify";
             this.btnVerify.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btnVerify_Click_1);
             // 
             // btnSelectCategory
             // 
-            this.btnSelectCategory.Label = "Select category for filter";
+            this.btnSelectCategory.Label = "3) Select/Populate category for rows in filter";
             this.btnSelectCategory.Name = "btnSelectCategory";
             this.btnSelectCategory.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btnSelectCategory_Click_1);
             // 
