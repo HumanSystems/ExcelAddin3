@@ -28,6 +28,7 @@ namespace ExcelAddIn2
 {
     public partial class Ribbon1
     {
+
         //struct has to be global for some reason
         struct OneColumnMap
         {
@@ -44,7 +45,8 @@ namespace ExcelAddIn2
 
         OneColumnMap thisColumnMap;
 
-        public int nbrFatalErrors = 0;
+        public static int nbrFatalErrors = 0;   //made static so ThisAddin can see it
+
         public const bool EBayImplemented = false;
 
         //define exterbnal function to get excel app process id as needed to kill zombie processes when using interop
@@ -134,7 +136,8 @@ namespace ExcelAddIn2
 
             //OneColumnMap thisColumnMap;  --> made global
             
-            LoadHeadingMap();
+            LoadHeadingMap();  //loads the internal table - NOT the spreadsheet
+  
 
             //TODO: Populate first row current column with SA heading and comment describing how it is derived
             //((Excel.Range)thisWS.Cells[1, thisColumnMap.SAPosition]).Value = thisColumnMap.SAHead;
@@ -158,6 +161,15 @@ namespace ExcelAddIn2
                     thisWS.Cells[1, map.SAPosition].AddComment(map.Note);
                 }
             }
+
+
+
+            DialogResult dialogResult = MessageBox.Show("Dow you want to continue past headings?", "SHeadings Check", MessageBoxButtons.YesNo);
+            if (dialogResult == DialogResult.No)
+            {
+                return;
+            }
+
 
 
             //Declare reuseable (per file) variables here
@@ -658,11 +670,11 @@ namespace ExcelAddIn2
             for (int c = 1; c <= colCount; c++)
             {
                 if (thisWS.Cells[1, c].Value == "Sale_No") {
-                    SaleNo = thisWS.Cells[2, c].Value;
+                    SaleNo = thisWS.Cells[2, c].Text.ToString();
                     break;
                 }
             }
-            bool result = int.TryParse(SaleNo, out intSaleNo);
+            bool result = int.TryParse(SaleNo, out intSaleNo);  //TODO: TEST THE RECULT AND ABORT IF NOT INTEGRE
 
             int pubEstInternalCol = 0;
             //Get "Public Estimate 1 (Low)" column number
@@ -1825,5 +1837,24 @@ namespace ExcelAddIn2
             form1.Show();
 
         }
+
+        //capture the woekbook save event and warn if errors
+        //private void WorkbookBeforeSave()
+        //{
+        //    this.BeforeSave +=
+        //        new Excel.WorkbookEvents_BeforeSaveEventHandler(
+        //        ThisWorkbook_BeforeSave);
+        //}
+
+        //void ThisWorkbook_BeforeSave(bool SaveAsUI, ref bool Cancel)
+        //{
+        //    if (DialogResult.No == MessageBox.Show("Are you sure you want to " +
+        //        "save the workbook?", "Example", MessageBoxButtons.YesNo))
+        //    {
+        //        Cancel = true;
+        //        MessageBox.Show("Save is canceled.");
+        //    }
+        //}
+
     }
 }
