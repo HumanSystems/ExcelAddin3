@@ -45,6 +45,7 @@ namespace ExcelAddIn2
 
         OneColumnMap thisColumnMap;
 
+
         public static int nbrFatalErrors = 0;   //made static so ThisAddin can see it
 
         public const bool EBayImplemented = false;
@@ -81,16 +82,15 @@ namespace ExcelAddIn2
             int thisRowCount = thisRange.Rows.Count;
             int thisColCount = thisRange.Columns.Count;
 
-            // thisWS.Cells[thisRowCount, thisColCount].Cleasarestr();               //this bullshit doesn't work
-            // thisWS.Cells[thisRowCount, thisColCount].ClearComments();        //this bullshit doesn't work
 
-            //** Clear Comments
+            //** Clear Comments, Values and color because reloading data
             for (int r = 1; r <= thisRowCount; r++)
             {
                 for (int c = 1; c <= thisColCount; c++)
                 {
                     thisWS.Cells[r, c].ClearComments();
                     thisWS.Cells[r, c].Clear();
+                    thisWS.Cells[r, c].Interior.Color = Color.Transparent;
                 }
             }
 
@@ -381,9 +381,21 @@ namespace ExcelAddIn2
             //*************************************************************************************************************************************************************
             //* This will check for missing values and also map database (id) values for category, auction/sale, consignor, consignment
             //*************************************************************************************************************************************************************
-            ValidateSpreadsheet();
+            ValidateSpreadsheet(true);
 
-            //%%%%%%%%%set lot numbers
+            //thisRowCount = thisRange.Rows.Count;
+            //thisColCount = thisRange.Columns.Count;
+            ////thisWS.Protect();  --> this protects the whole sheet
+            ////https://stackoverflow.com/questions/44883664/how-to-lock-specific-rows-and-columns-using-excel-interop-c-sharp
+            //for (int r = 1; r <= thisRowCount; r++)
+            //{
+            //    //for (int c = 1; c <= thisColCount; c++)
+            //    //{
+            //        thisWS.Cells[r, 1].Locked = false;
+
+            //    //}
+            //}
+            //thisWS.Protect(UserInterfaceOnly: true);
 
             //Globals.ThisAddIn.Application.StatusBar = String.Format("All Catalog Master files are loaded and Validation is complete");
             Globals.ThisAddIn.Application.StatusBar = String.Format("All Catalog Master files are loaded and Validation is complete. The Number of errors is: {0}", nbrFatalErrors.ToString());
@@ -405,6 +417,8 @@ namespace ExcelAddIn2
             cmd1.Connection = sqlConnection1;
             SqlDataReader reader1;
             cmd1.CommandText = "SELECT SAColumnNbr,SAHeading,CMColumnNbr,CMHeading, Required, DefaultValue, mapDB, SARequired, Note FROM dbo.ExcelHeadingMap order by SAColumnNbr";
+            //TODO: Get New column Definition and append to column heads
+
 
             sqlConnection1.Open();
             reader1 = cmd1.ExecuteReader();
@@ -516,14 +530,17 @@ namespace ExcelAddIn2
         }
 
 
-        private void ValidateSpreadsheet()
+        private void ValidateSpreadsheet(bool newData = false) //default in case hit Validate from Ribbon
         {
             //((Excel.Range)thisWS.Cells[r, map.SAPosition]).Value = (fromXlRange.Cells[r, map.CMPosition].Value); //THIS IS WHERE VALUE GET'S MOVED!!!
+
+            
 
             Excel.Worksheet thisWS = (Excel.Worksheet)Globals.ThisAddIn.Application.ActiveSheet;
             Excel.Range thisRange = thisWS.UsedRange;
             int rowCount = thisRange.Rows.Count;
             int colCount = thisRange.Columns.Count;
+
 
 
             if (rowCount < 2)
@@ -533,6 +550,20 @@ namespace ExcelAddIn2
             }
 
             nbrFatalErrors = 0;
+            //TODO: 1) need to clear colors if old spreadsheet
+
+            //** Clear Comments and color because re-validating data when data has not been loaded/reloaded
+            if (!newData)
+            {
+                for (int r = 1; r <= rowCount; r++)
+                {
+                    for (int c = 1; c <= colCount; c++)
+                    {
+                        thisWS.Cells[r, c].ClearComments();
+                        thisWS.Cells[r, c].Interior.Color = Color.Transparent;
+                    }
+                }
+            }
 
             Cursor.Current = Cursors.WaitCursor;
             Globals.ThisAddIn.Application.StatusBar = String.Format("We are now validating and converting fields in the target AMS spreadsheet. Please be patient.");
@@ -563,52 +594,28 @@ namespace ExcelAddIn2
             //****************************************************************************************************************************************************************************
             //* Validate Required fields (indicated in ExcelHeadingMap
             //****************************************************************************************************************************************************************************
-       
 
 
-
-
-            //build list of SA columns that are required
-            //ArrayList reqSaColNbr = new ArrayList();
+            // 1) Build list of SA columns that are required
             ArrayList reqSaColName = new ArrayList();
+            ArrayList mapSaColName = new ArrayList();
             foreach (OneColumnMap map in headingsMap)   //TODO: build headingsMap in initialize function in case Validate hit on existing spreadsheet. Also what if unrelated spreadsheet?
             {
                 if (map.Required)           //if CM heading mapped to SA Heading
                 {
-                    //reqSaColNbr.Add(map.SAPosition);
                     reqSaColName.Add(map.SAHead);
-
                 }
+                //TODO - IS this used? (mapped)
+                if (map.mapDB)           //if CM heading mapped to SA Heading
+                {
+                    mapSaColName.Add(map.SAHead);
+                }
+
             }
 
             //get count of required columns to walk
             int requiredCount = reqSaColName.Count;
-            //int requiredCount = reqSaColNbr.Count;
 
-            //build list of SA columns that are mapped
-
-            //ArrayList mapSaColNbr = new ArrayList();
-            ArrayList mapSaColName = new ArrayList();
-            foreach (OneColumnMap map in headingsMap)
-            {
-                if (map.mapDB)           //if CM heading mapped to SA Heading
-                {
-                    //mapSaColNbr.Add(map.SAPosition);
-                    mapSaColName.Add(map.SAHead);
-                }
-            }
-
-
-
-
-            //((Excel.Range)thisWS.Cells[1, thisColumnMap.SAPosition]).Value = thisColumnMap.SAHead;
-            //((Excel.Range)thisWS.Cells[1, thisColumnMap.SAPosition]).Value = thisColumnMap.SAHead;
-            //use the current row in the "TO" spreadsheet- (outer loop)
-            //((Excel.Range)thisWS.Cells[r, map.SAPosition]).Value = (fromXlRange.Cells[r, map.CMPosition].Value); //THIS IS WHERE VALUE GET'S MOVED!!!
-
-            //((Excel.Range)thisWS.Cells[rowCount, colCount]).Interior.Color = Color.White;
-            // ((Excel.Range)thisWS.Cells[rowCount, colCount]).ClearComments();
-            //((Excel.Range)thisWS.Cells[rowCount, colCount]).Clear();   //SHOULD RESET COLOR AND COMMENTS INSTEAD OF ABOVE
 
 
             //*********************************************************************************************************************************************************
@@ -620,11 +627,7 @@ namespace ExcelAddIn2
             {
                 for (int c = 1; c <= colCount; c++)
                 {
-                    //value = thisWS.Cells[r, c].Value;
-                    //valueint = 0;
-                    //o = Int32.TryParse(value, out valueint);
-
-
+                    // 3) Make sure all required fields are present
                     foreach (string reqSAName in reqSaColName)
                     {
                         //value = thisWS.Cells[r, c].Value;
@@ -662,16 +665,21 @@ namespace ExcelAddIn2
             //int SALOAProviderId = 0;
             //int SAShippingCategoryId = 0;
 
-
-            //Get the saleno by finding the Sale_No column and getting first row value
-            //TODO FATAL ERROR IF N/F
+            var openColumns = new List<int>();
             int intSaleNo = 0;
             string SaleNo = String.Empty;
             for (int c = 1; c <= colCount; c++)
             {
+                //TODO FATAL ERROR IF N/F
+                //Get the saleno by finding the Sale_No column and getting first row value
                 if (thisWS.Cells[1, c].Value == "Sale_No") {
                     SaleNo = thisWS.Cells[2, c].Text.ToString();
-                    break;
+                    continue;
+                }
+
+                //Create list of columns that can be directly added
+                if (thisWS.Cells[1, c].Value == "SrtOrder") {
+                    openColumns.Add(c);
                 }
             }
             bool result = int.TryParse(SaleNo, out intSaleNo);  //TODO: TEST THE RECULT AND ABORT IF NOT INTEGRE
@@ -724,12 +732,17 @@ namespace ExcelAddIn2
                                     thisWS.Cells[r, c].Interior.Color = Color.Red;
 
                                     //TODO: add row,column and heading to comment
-                                    //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
                                     thisWS.Cells[r, c].ClearComments();
                                     thisWS.Cells[r, c].AddComment("Tried to map CM consignor id: " + thisWS.Cells[r, c].Value + " to AMS consignor id - consignor id not found in Consignor table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
-                                    //thisWS.Cells[r, c].Comment[1].AutoFit = true;
 
-                                    nbrFatalErrors++;
+                                    thisWS.Cells[r, c].Comment[1].Style.Size.AutomaticSize = true; 
+
+                                    //thisWS.Cells[r, c].Comment[1].AutoFit = true;  --> this does not work
+                                    //var comment = thisWS.Cell("A3").Comment;
+                                    //comment.AddText("This is a very very very very very long line comment.");
+                                    //comment.Style.Size.AutomaticSize = true;
+
+                                nbrFatalErrors++;
                                 }
 
                                 reader2.Close();
@@ -768,9 +781,12 @@ namespace ExcelAddIn2
                                     //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
                                     thisWS.Cells[r, c].ClearComments();
                                     thisWS.Cells[r, c].AddComment("Tried to map CM consignment id: " + thisWS.Cells[r, c].Value + " to AMS consignment id - CM consignment id not found in Consignment table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
-                                    //thisWS.Cells[r, c].Comment[1].AutoFit = true;
+                                //thisWS.Cells[r, c].Comment[1].AutoFit = true;
 
-                                    nbrFatalErrors++;
+                                thisWS.Cells[r, c].Comment[1].Style.Size.AutomaticSize = true;
+
+
+                                nbrFatalErrors++;
                                 }
 
                                 reader2.Close();
@@ -864,6 +880,8 @@ namespace ExcelAddIn2
                                             thisWS.Cells[r, c].ClearComments();
                                             thisWS.Cells[r, c].AddComment("Tried to map CM Gum (Stamp): " + thisWS.Cells[r, c].Value + " to AMS gum code CM code found but AMS code blank in Gum_Codes table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
                                             //thisWS.Cells[r, c].Comment[1].AutoFit = true;
+
+
 
                                             nbrFatalErrors++;
                                         }
@@ -1774,13 +1792,42 @@ namespace ExcelAddIn2
             //        }
 
             //        reader2.Close();
-
-
-
-
-
             //    }
             //}
+
+            //thisRowCount = thisRange.Rows.Count;
+            //thisColCount = thisRange.Columns.Count;
+            //thisWS.Protect();  --> this protects the whole sheet
+            //https://stackoverflow.com/questions/44883664/how-to-lock-specific-rows-and-columns-using-excel-interop-c-sharp
+            foreach (int c in openColumns)
+            {
+                for (int r = 2; r <= rowCount; r++)
+                {
+                    //thisWS.Cells[r, c].Locked = true;
+                    thisWS.Cells[r, c].Locked = false;
+                }
+            }
+            //Excel.Range newRange = thisWS.UsedRange;
+
+            thisWS.Activate();
+            thisWS.Application.ActiveWindow.SplitRow = 1;
+            thisWS.Application.ActiveWindow.FreezePanes = true;
+
+            // Now apply autofilter
+            Excel.Range firstRow = (Excel.Range)thisWS.Rows[1];
+            firstRow.AutoFilter(1,
+                                Type.Missing,
+                                Excel.XlAutoFilterOperator.xlAnd,
+                                Type.Missing,
+                                true);
+
+            thisWS.Protect(UserInterfaceOnly: true, AllowFiltering: true, AllowSorting: true);
+
+           
+
+            //AllowFormattingCells: true
+            //Contents: false
+
 
 
 

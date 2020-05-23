@@ -494,6 +494,7 @@ namespace ExcelAddIn2
             //    }
             //}
 
+            thisWS.Unprotect();
 
             foreach (Excel.Range area in thisRange.Areas)
             {
@@ -503,16 +504,25 @@ namespace ExcelAddIn2
                     int index = row.Row;
                     //MessageBox.Show("Here is row: " + row.Cells[index, categoryColumn].Value + "  Here is sheet: " + thisWS.Cells[index, categoryColumn].Value);
 
-                    if (index != 1)
-                    {
+                    if (index != 1) { 
+
+                        //thisWS.Cells[index, categoryColumn].Locked = false;
+
+
                         thisWS.Cells[index, categoryColumn].ClearComments();
                         thisWS.Cells[index, categoryColumn].AddComment("[Category code] Name" + textCategoryName.Text + " specified by user");
 
                         thisWS.Cells[index, categoryColumn].Interior.Color = Color.Blue;
                         thisWS.Cells[index, categoryColumn].Value = textCategoryCode.Text;
+
+                        //thisWS.Cells[index, categoryColumn].Locked = true;
+
                     }
                 }
             }
+
+            thisWS.Protect(UserInterfaceOnly: true, AllowFiltering: true, AllowSorting: true);
+
 
             //for (int r = 2; r <= thisRowCount; r++)
             //{
@@ -537,36 +547,36 @@ namespace ExcelAddIn2
             //    {
 
 
-                        //        if (row.Cells[1, 2].Value2 != null)
-                        //        {
+            //        if (row.Cells[1, 2].Value2 != null)
+            //        {
 
-                        //            if (thisWS.Cells[1, c].Value == reqSAName && thisWS.Cells[r, c].Value == null)
-                        //            {
-                        //                ((Excel.Range)thisWS.Cells[r, c]).Interior.Color = Color.Red;
+            //            if (thisWS.Cells[1, c].Value == reqSAName && thisWS.Cells[r, c].Value == null)
+            //            {
+            //                ((Excel.Range)thisWS.Cells[r, c]).Interior.Color = Color.Red;
 
-                        //                //TODO: add row,column and heading to comment
-                        //                String txt = thisWS.Cells[1, c].Value;
-                        //                thisWS.Cells[r, c].ClearComments();
-                        //                thisWS.Cells[r, c].AddComment(txt + " is required");
-                        //                //((Excel.Range)ws.Cells[r, c]).Style.Name = "Normal"
-                        //            } 
-                        //            MessageBox.Show(String.Format("The row value for row number {0} ",
-                        //             Convert.ToString(row.Cells[1, 2].Value2)));
+            //                //TODO: add row,column and heading to comment
+            //                String txt = thisWS.Cells[1, c].Value;
+            //                thisWS.Cells[r, c].ClearComments();
+            //                thisWS.Cells[r, c].AddComment(txt + " is required");
+            //                //((Excel.Range)ws.Cells[r, c]).Style.Name = "Normal"
+            //            } 
+            //            MessageBox.Show(String.Format("The row value for row number {0} ",
+            //             Convert.ToString(row.Cells[1, 2].Value2)));
 
-                        //            thisWS.Cells[r, c].ClearComments();
-                        //            thisWS.Cells[r, c].Clear();
+            //            thisWS.Cells[r, c].ClearComments();
+            //            thisWS.Cells[r, c].Clear();
 
-                        //            thisWS.Cells[1, thisColumnMap.SAPosition].ClearComments();
-                        //            thisWS.Cells[1, thisColumnMap.SAPosition].AddComment("Pulled from Catalog Master field: " + thisColumnMap.CMHead + ".  " + thisColumnMap.Note);
+            //            thisWS.Cells[1, thisColumnMap.SAPosition].ClearComments();
+            //            thisWS.Cells[1, thisColumnMap.SAPosition].AddComment("Pulled from Catalog Master field: " + thisColumnMap.CMHead + ".  " + thisColumnMap.Note);
 
-                        //        }
-                        //        else
-                        //        {
-                        //            break;
-                        //        }
-                        //    }
-                        //}
+            //        }
+            //        else
+            //        {
+            //            break;
+            //        }
+            //    }
+            //}
 
-                }
+        }
     }
 }
