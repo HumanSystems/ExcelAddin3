@@ -77,11 +77,16 @@ namespace ExcelAddIn2
         private void btnLoadCatMast_Click(object sender, RibbonControlEventArgs e)
         {
 
+            //Console.WriteLine("Into it");
+            //System.Diagnostics.Debug.WriteLine("Fuck you");
+
             Excel.Worksheet thisWS = (Excel.Worksheet)Globals.ThisAddIn.Application.ActiveSheet;
             Excel.Range thisRange = thisWS.UsedRange;
             int thisRowCount = thisRange.Rows.Count;
             int thisColCount = thisRange.Columns.Count;
 
+            //thisWS.Protect(UserInterfaceOnly: true, AllowFiltering: true, AllowSorting: true);
+            thisWS.Unprotect();
 
             //** Clear Comments, Values and color because reloading data
             for (int r = 1; r <= thisRowCount; r++)
@@ -407,11 +412,9 @@ namespace ExcelAddIn2
 
         public void LoadHeadingMap()
         {
-            //%%%BEGIN
 
-            //SqlConnection sqlConnection1 = new SqlConnection("Data Source=BACKUPDELL\\SQLEXPRESS ;Initial Catalog=SimpleAuction;Integrated Security=True");
-            //SqlConnection sqlConnection1 = new SqlConnection("Data Source=BACKUPDELL ;Initial Catalog=Describing;Integrated Security=True");
-            SqlConnection sqlConnection1 = new SqlConnection("Data Source=MANCINI-AWARE ;Initial Catalog=Describing;Integrated Security=True");
+            //SqlConnection sqlConnection1 = new SqlConnection("Data Source=MANCINI-AWARE ;Initial Catalog=Describing;Integrated Security=True");     ---> old one
+            SqlConnection sqlConnection1 = new SqlConnection("Data Source=MANCINI-AWARE\\SQLEXPRESS ;Initial Catalog=Describing;Integrated Security=True");
             SqlCommand cmd1 = new SqlCommand();
             cmd1.CommandType = CommandType.Text;
             cmd1.Connection = sqlConnection1;
@@ -542,13 +545,13 @@ namespace ExcelAddIn2
             int colCount = thisRange.Columns.Count;
 
 
-
             if (rowCount < 2)
             {
                 MessageBox.Show("You haven't loaded data yet - please load data first");
                 return;
             }
 
+            thisWS.Unprotect();
             nbrFatalErrors = 0;
             //TODO: 1) need to clear colors if old spreadsheet
 
@@ -577,9 +580,9 @@ namespace ExcelAddIn2
 
 
             //Set up connection for multiple queries
-            //SqlConnection sqlConnection2 = new SqlConnection("Data Source=BACKUPDELL\\SQLEXPRESS ;Initial Catalog=SimpleAuction;Integrated Security=True");
-            //SqlConnection sqlConnection2 = new SqlConnection("Data Source=BACKUPDELL;Initial Catalog=Describing;Integrated Security=True");
-            SqlConnection sqlConnection2 = new SqlConnection("Data Source=MANCINI-AWARE;Initial Catalog=Describing;Integrated Security=True");
+            //SqlConnection sqlConnection2 = new SqlConnection("Data Source=MANCINI-AWARE;Initial Catalog=Describing;Integrated Security=True"); --> old one
+            SqlConnection sqlConnection2 = new SqlConnection("Data Source=MANCINI-AWARE\\SQLEXPRESS ;Initial Catalog=Describing;Integrated Security=True");
+
             SqlCommand cmd2 = new SqlCommand();
             cmd2.CommandType = CommandType.Text;
             cmd2.Connection = sqlConnection2;
@@ -656,6 +659,7 @@ namespace ExcelAddIn2
 
             //int SACategoryId = 0;
             string GumCode = "";
+            string PackageCode = "";
             //string EbayCategoryId = "";
             //int SAAuctionId = 0;
             int SAConsignorId = 0;
@@ -665,143 +669,249 @@ namespace ExcelAddIn2
             //int SALOAProviderId = 0;
             //int SAShippingCategoryId = 0;
 
+            //key column numbers used in xformations
+            int packageUnitsCol = 0;
+            int pubEstInternalCol = 0;
+            int nbrInternetPhotosCol = 0;
+            int nbrCatalogPhotosCol = 0;
+            int formatCol = 0;
+            int catalog1Col = 0;
+            int collectionTypeCol = 0;
+            int alphaTextCol = 0;
+            int originalSymbolCol = 0;
+            int gumStampCol = 0;
+            int packageTypeCol = 0;
+            int reserveTypeCol = 0;
+            int consignorNoCol = 0;
+            int consignmentNoCol = 0;
+            int publicEstLowCol = 0;
+            int publicEstHighCol = 0;
+
+            //List of columns that can be maintained directly
             var openColumns = new List<int>();
+
+            double packageUnits = 0;
+            double nbrInternetPhotos = 0;
+            double nbrCatalogPhotos = 0;
+            string packageUnitsString = "";
+            string formatString = "";
+
             int intSaleNo = 0;
             string SaleNo = String.Empty;
+            //Console.WriteLine("First column count (colCount): {0}", colCount.ToString());
+            System.Diagnostics.Debug.WriteLine("First column count (colCount): {0}", colCount.ToString());
+            string testTitle = "";
+
             for (int c = 1; c <= colCount; c++)
             {
+
+
+                //Console.WriteLine("Column: {0} has title {1}", c.ToString(), thisWS.Cells[1, c].Value);
+                testTitle = thisWS.Cells[1, c].Value;
+                System.Diagnostics.Debug.WriteLine("Column: {0}  ",c.ToString());
+                System.Diagnostics.Debug.WriteLine("Title: {0}  ", testTitle);
+
+
                 //TODO FATAL ERROR IF N/F
-                //Get the saleno by finding the Sale_No column and getting first row value
+                //TODO: MAKE A SWITCH STMT 
                 if (thisWS.Cells[1, c].Value == "Sale_No") {
+                    //Get the saleno by finding the Sale_No column and getting first row value
                     SaleNo = thisWS.Cells[2, c].Text.ToString();
                     continue;
                 }
-
-                //Create list of columns that can be directly added
-                if (thisWS.Cells[1, c].Value == "SrtOrder") {
+                else if (thisWS.Cells[1, c].Value == "SrtOrder") {
+                    //Create list of columns that can be directly changed
                     openColumns.Add(c);
                 }
+                else if (thisWS.Cells[1, c].Value == "Est_Cons")   //this target name will have been mapped previously
+                {
+                    //get Est_Cons column to be used later for "Public Estimate 1 (Low)" if internet sale 
+                    pubEstInternalCol = c;
+                }
+                else if (thisWS.Cells[1, c].Value == "Package_units")   //this target name will have been mapped previously
+                {
+                    //get Est_Cons column to be used later for "Public Estimate 1 (Low)" if internet sale 
+                    packageUnitsCol = c;
+                }
+                else if (thisWS.Cells[1, c].Value == "Nbr_photos_internet")
+                {
+                    nbrInternetPhotosCol = c;
+                }
+                else if (thisWS.Cells[1, c].Value == "Nbr_photos_catalog")
+                {
+                    nbrCatalogPhotosCol = c;
+                }
+                else if (thisWS.Cells[1, c].Value == "Format")
+                {
+                    formatCol = c;
+                }
+                else if (thisWS.Cells[1, c].Value == "Catalog 1 Number")
+                {
+                    catalog1Col = c;
+                }
+                else if (thisWS.Cells[1, c].Value == "Collection Type")
+                {
+                    collectionTypeCol = c;
+                }
+                else if (thisWS.Cells[1, c].Value == "Alpha Text")
+                {
+                    alphaTextCol = c;
+                }
+                else if (thisWS.Cells[1, c].Value == "OriginalSymbols")
+                {
+                    originalSymbolCol = c;
+                }
+                else if (thisWS.Cells[1, c].Value == "Gum (Stamps)")
+                {
+                    gumStampCol = c;
+                }
+                else if (thisWS.Cells[1, c].Value == "Package_type")
+                {
+                    packageTypeCol = c;
+                }
+                else if (thisWS.Cells[1, c].Value == "Reserve Type")
+                {
+                    reserveTypeCol = c;
+                }
+                else if (thisWS.Cells[1, c].Value == "Consignor No.")
+                {
+                    consignorNoCol = c;
+                }
+                else if (thisWS.Cells[1, c].Value == "Consignment Number -Incoming")
+                {
+                    consignmentNoCol = c;
+                }
+                else if (thisWS.Cells[1, c].Value == "Public Estimate 1 (Low)")
+                {
+                    publicEstLowCol = c;
+                }
+                else if (thisWS.Cells[1, c].Value == "Public Estimate 2 (High)")
+                {
+                    publicEstHighCol = c;
+                }
+
+
+
             }
             bool result = int.TryParse(SaleNo, out intSaleNo);  //TODO: TEST THE RECULT AND ABORT IF NOT INTEGRE
 
-            int pubEstInternalCol = 0;
-            //Get "Public Estimate 1 (Low)" column number
-            for (int c = 1; c <= colCount; c++)
-            {
-                if (thisWS.Cells[1, c].Value == "Est_Cons")   //this target name will have been mapped previously
-                {
-                    pubEstInternalCol = c;
-                    break;
-                }
-            }
+
+            string t = "";
 
             //Check fields that require database mapping by name
+            //$$$$$$$$$$
             for (int r = 2; r <= rowCount; r++)
                 {
                 for (int c = 1; c <= colCount; c++)
+                {
+                    t = thisWS.Cells[1, c].Value;
+                    System.Diagnostics.Debug.WriteLine("XTitle: " + t);
+
+                    //WARNING!!! this test for nulls will knock out test if value is null - use a default if testing a field that might be null
+                    //if ((thisWS.Cells[1, c].Value != null) && (thisWS.Cells[r, c].Value != null))   //mapped columns are required so will be red if not provided
+                    if (thisWS.Cells[1, c].Value != null)    //mapped columns are required so will be red if not provided
                     {
-                        if ((thisWS.Cells[1, c].Value != null) && (thisWS.Cells[r, c].Value != null))   //mapped columns are required so will be red if not provided
+
+                        if (thisWS.Cells[1, c].Value == "Consignor")
                         {
-                       
-                            if (thisWS.Cells[1, c].Value == "consignor")
+                            SAConsignorId = 0;
+
+                            cmd2.CommandText = "SELECT SAId FROM dbo.Consignor where CMId = '" + thisWS.Cells[r, consignorNoCol].Value + "'";    //mapping step stuffed CM value, so now re-map
+                            reader2 = cmd2.ExecuteReader();
+
+
+                            if (reader2.HasRows)
                             {
-                                SAConsignorId = 0;
-
-                                cmd2.CommandText = "SELECT SAId FROM dbo.Consignor where CMId = '" + thisWS.Cells[r, c].Value + "'";    //mapping step stuffed CM value, so now re-map
-                                reader2 = cmd2.ExecuteReader();
-
-
-                                if (reader2.HasRows)
+                                while (reader2.Read())
                                 {
-                                    while (reader2.Read())
-                                    {
 
-                                        //CMCategoryTxt = reader2.GetString(1);
-                                        //SACategoryTxt = reader2.GetString(3);
-                                        //EBCategoryTxt = reader2.GetString(5);
+                                    //CMCategoryTxt = reader2.GetString(1);
+                                    //SACategoryTxt = reader2.GetString(3);
+                                    //EBCategoryTxt = reader2.GetString(5);
 
-                                        SAConsignorId = reader2.GetInt32(0);         //assume it's not red alread because these was a value to lookup
-                                        thisWS.Cells[r, c].Value = SAConsignorId;
-                                        thisWS.Cells[r, c].Interior.Color = Color.Blue;
-                                        //break;
-                                    }
-                                }
-                                else
-                                {
-                                    //((Excel.Range)thisWS.Cells[r, c]).Interior.Color = Color.Red;
-                                    thisWS.Cells[r, c].Interior.Color = Color.Red;
-
-                                    //TODO: add row,column and heading to comment
+                                    SAConsignorId = reader2.GetInt32(0);         //assume it's not red alread because these was a value to lookup
+                                    thisWS.Cells[r, c].Value = SAConsignorId;
+                                    thisWS.Cells[r, c].Interior.Color = Color.Blue;
                                     thisWS.Cells[r, c].ClearComments();
-                                    thisWS.Cells[r, c].AddComment("Tried to map CM consignor id: " + thisWS.Cells[r, c].Value + " to AMS consignor id - consignor id not found in Consignor table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
+                                    thisWS.Cells[r, c].AddComment("Mapped CM consignor id: " + thisWS.Cells[r, consignorNoCol].Value + " to AMS consignor id");
 
-                                    thisWS.Cells[r, c].Comment[1].Style.Size.AutomaticSize = true; 
-
-                                    //thisWS.Cells[r, c].Comment[1].AutoFit = true;  --> this does not work
-                                    //var comment = thisWS.Cell("A3").Comment;
-                                    //comment.AddText("This is a very very very very very long line comment.");
-                                    //comment.Style.Size.AutomaticSize = true;
-
-                                nbrFatalErrors++;
+                                    //break;
                                 }
-
-                                reader2.Close();
                             }
-                            //****************
-                            else if (thisWS.Cells[1, c].Value == "prop_num")
+                            else
                             {
-                                SAConsignmentId = 0;
+                                //((Excel.Range)thisWS.Cells[r, c]).Interior.Color = Color.Red;
+                                thisWS.Cells[r, c].Interior.Color = Color.Red;
 
-
-                                cmd2.CommandText = "SELECT SAId FROM dbo.Consignment where CMId = '" + thisWS.Cells[r, c].Value + "'";    //mapping step stuffed CM value, so now re-map
-                                reader2 = cmd2.ExecuteReader();
-
-
-                                if (reader2.HasRows)
-                                {
-                                    while (reader2.Read())
-                                    {
-
-                                        //CMCategoryTxt = reader2.GetString(1);
-                                        //SACategoryTxt = reader2.GetString(3);
-                                        //EBCategoryTxt = reader2.GetString(5);
-
-                                        SAConsignmentId = reader2.GetInt32(0);         //assume it's not red alread because these was a value to lookup
-                                        thisWS.Cells[r, c].Value = SAConsignmentId;
-                                        thisWS.Cells[r, c].Interior.Color = Color.Blue;
-                                        //break;
-                                    }
-                                }
-                                else
-                                {
-                                    //((Excel.Range)thisWS.Cells[r, c]).Interior.Color = Color.Red;
-                                    thisWS.Cells[r, c].Interior.Color = Color.Red;
-
-                                    //TODO: add row,column and heading to comment
-                                    //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
-                                    thisWS.Cells[r, c].ClearComments();
-                                    thisWS.Cells[r, c].AddComment("Tried to map CM consignment id: " + thisWS.Cells[r, c].Value + " to AMS consignment id - CM consignment id not found in Consignment table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
-                                //thisWS.Cells[r, c].Comment[1].AutoFit = true;
+                                //TODO: add row,column and heading to comment
+                                thisWS.Cells[r, c].ClearComments();
+                                thisWS.Cells[r, c].AddComment("Tried to map CM consignor id: " + thisWS.Cells[r, consignorNoCol].Value + " to AMS consignor id - consignor id not found in Consignor table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
 
                                 thisWS.Cells[r, c].Comment[1].Style.Size.AutomaticSize = true;
 
+                                //thisWS.Cells[r, c].Comment[1].AutoFit = true;  --> this does not work
+                                //var comment = thisWS.Cell("A3").Comment;
+                                //comment.AddText("This is a very very very very very long line comment.");
+                                //comment.Style.Size.AutomaticSize = true;
 
                                 nbrFatalErrors++;
-                                }
-
-                                reader2.Close();
                             }
-                            //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                            //int pubEstInternalCol = 0;
-                            //in intSaleNo = 0;
-                            //
-                            else if (thisWS.Cells[1, c].Value == "Est_Low")
-                            {
 
-                                if (intSaleNo > 3999) 
+                            reader2.Close();
+                        }
+                        //$$$$$$$$$$$
+                        else if (thisWS.Cells[1, c].Value == "prop_num")
+                        {
+                            SAConsignmentId = 0;
+
+
+                            cmd2.CommandText = "SELECT SAId FROM dbo.Consignment where CMId = '" + thisWS.Cells[r, consignmentNoCol].Value + "'";    //mapping step stuffed CM value, so now re-map
+                            reader2 = cmd2.ExecuteReader();
+
+
+                            if (reader2.HasRows)
+                            {
+                                while (reader2.Read())
                                 {
-                                    thisWS.Cells[r, c].Value = thisWS.Cells[r, pubEstInternalCol].Value;
+
+                                    //CMCategoryTxt = reader2.GetString(1);
+                                    //SACategoryTxt = reader2.GetString(3);
+                                    //EBCategoryTxt = reader2.GetString(5);
+
+                                    SAConsignmentId = reader2.GetInt32(0);         //assume it's not red alread because these was a value to lookup
+                                    thisWS.Cells[r, c].Value = SAConsignmentId;
+                                    thisWS.Cells[r, c].Interior.Color = Color.Blue;
+                                    thisWS.Cells[r, c].ClearComments();
+                                    thisWS.Cells[r, c].AddComment("Mapped CM consignment id: " + thisWS.Cells[r, consignmentNoCol].Value + " to AMS consignment id");
+
+                                    //break;
                                 }
+                            }
+                            else
+                            {
+                                //((Excel.Range)thisWS.Cells[r, c]).Interior.Color = Color.Red;
+                                thisWS.Cells[r, c].Interior.Color = Color.Red;
+
+                                //TODO: add row,column and heading to comment
+                                //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
+                                thisWS.Cells[r, c].ClearComments();
+                                thisWS.Cells[r, c].AddComment("Tried to map CM consignment id: " + thisWS.Cells[r, consignmentNoCol].Value + " to AMS consignment id - CM consignment id not found in Consignment table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
+                                thisWS.Cells[r, c].Interior.Color = Color.Red;
+
+                                thisWS.Cells[r, c].Comment[1].Style.Size.AutomaticSize = true; //TODO: autosize not working?
+
+
+                                nbrFatalErrors++;
+                            }
+
+                            reader2.Close();
+                        }
+                        //**************
+                        else if (thisWS.Cells[1, c].Value == "Est_Low")
+                        {
+                        if (intSaleNo > 3999)  //Internet sales use internale estimate
+                            {
+                                thisWS.Cells[r, c].Value = thisWS.Cells[r, pubEstInternalCol].Value;
 
                                 if (thisWS.Cells[r, c].Value != null)
                                 {
@@ -816,24 +926,63 @@ namespace ExcelAddIn2
                                     thisWS.Cells[r, c].AddComment("Low Estimate could not be derived from CM Estimate (Internal) for Internet sale because field is empty");
                                 }
                             }
+                            else
+                            {
+                                thisWS.Cells[r, c].Value = thisWS.Cells[r, publicEstLowCol].Value;
+
+                                if (thisWS.Cells[r, c].Value != null)
+                                {
+                                    thisWS.Cells[r, c].Interior.Color = Color.Blue;
+                                    thisWS.Cells[r, c].ClearComments();
+                                    thisWS.Cells[r, c].AddComment("Low Estimate derived from Public Estimate (Low) because this is a Public Sale");
+                                }
+                                else
+                                {
+                                    thisWS.Cells[r, c].Interior.Color = Color.Red;
+                                    thisWS.Cells[r, c].ClearComments();
+                                    thisWS.Cells[r, c].AddComment("Low Estimate could not be derived from CM Public Estimate (Low) for public sale because field is empty");
+                                }
+                            }
+                            
+                        }
+                        //$$$$$
                         else if (thisWS.Cells[1, c].Value == "Est_Real")
                         {
+                            //int publicEstLowCol = 0;
+                            //int publicEstHighCol = 0;
 
                             if (intSaleNo > 3999)
                             {
-                                thisWS.Cells[r, c].Value = null;  //estimate high is empty for Internet sales
+                                thisWS.Cells[r, c].Value = null;  //Estimate high is empty for Internet sales
                                 thisWS.Cells[r, c].Interior.Color = Color.Blue;
                                 thisWS.Cells[r, c].ClearComments();
                                 thisWS.Cells[r, c].AddComment("High Estimate is not used because this is an Internet Sale");
                             }
-                           
+                            else
+                            {
+                                thisWS.Cells[r, c].Value = thisWS.Cells[r, publicEstHighCol].Value;
+
+                                if (thisWS.Cells[r, c].Value != null)
+                                {
+                                    thisWS.Cells[r, c].Interior.Color = Color.Blue;
+                                    thisWS.Cells[r, c].ClearComments();
+                                    thisWS.Cells[r, c].AddComment("High Estimate derived from Public Estimate (High) because this is a Public Sale");
+                                }
+                                else
+                                {
+                                    thisWS.Cells[r, c].Interior.Color = Color.Red;
+                                    thisWS.Cells[r, c].ClearComments();
+                                    thisWS.Cells[r, c].AddComment("High Estimate could not be derived from CM Public Estimate (High) for public sale because field is empty");
+                                }
+                            }
                         }
+                        //$$$$$$$$$$$$$
                         else if (thisWS.Cells[1, c].Value == "Currency")
                         {
 
                             if (intSaleNo < 101)  //only Public Hong Kong sales are HK$
                             {
-                                thisWS.Cells[r, c].Value = "HK$";  
+                                thisWS.Cells[r, c].Value = "HK$";
                                 thisWS.Cells[r, c].Interior.Color = Color.Blue;
                                 thisWS.Cells[r, c].ClearComments();
                                 thisWS.Cells[r, c].AddComment("Public Hong Kong sale uses HK$");
@@ -847,72 +996,212 @@ namespace ExcelAddIn2
                             }
 
                         }
-                        else if (thisWS.Cells[1, c].Value == "Gum" && thisWS.Cells[r, c].Value != "") //only go after where CM hase set the gum code
+                        //$$$$$$$$$$$$$$
+                        else if (thisWS.Cells[1, c].Value == "Gum" && thisWS.Cells[r, gumStampCol].Value != null) //only go after where CM hase set the gum code
+                        {
+                            GumCode = "";
+
+
+                            cmd2.CommandText = "SELECT AMS_Gum_Code FROM dbo.Gum_Codes where CM_Gum_Code = '" + thisWS.Cells[r, gumStampCol].Value + "'";
+                            reader2 = cmd2.ExecuteReader();
+
+
+                            if (reader2.HasRows)
                             {
-                                GumCode = "";
-
-
-                                cmd2.CommandText = "SELECT AMS_Gum_Code FROM dbo.Gum_Codes where CM_Gum_Code = '" + thisWS.Cells[r, c].Value + "'";
-                                reader2 = cmd2.ExecuteReader();
-
-
-                                if (reader2.HasRows)
+                                while (reader2.Read())
                                 {
-                                    while (reader2.Read())
+
+                                    //CMCategoryTxt = reader2.GetString(1);
+                                    //SACategoryTxt = reader2.GetString(3);
+                                    //EBCategoryTxt = reader2.GetString(5);
+
+                                    GumCode = reader2.GetString(0);         //assume it's not red alread because these was a value to lookup
+                                    if (GumCode != "")
                                     {
-
-                                        //CMCategoryTxt = reader2.GetString(1);
-                                        //SACategoryTxt = reader2.GetString(3);
-                                        //EBCategoryTxt = reader2.GetString(5);
-
-                                        GumCode = reader2.GetString(0);         //assume it's not red alread because these was a value to lookup
-                                        if (GumCode != "")
-                                        {
-                                            thisWS.Cells[r, c].Value = GumCode;
-                                            thisWS.Cells[r, c].Interior.Color = Color.Blue;
-                                        }
-                                        else
-                                        {
-                                            thisWS.Cells[r, c].Interior.Color = Color.Red;
-
-                                            //TODO: add row,column and heading to comment
-                                            //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
-                                            thisWS.Cells[r, c].ClearComments();
-                                            thisWS.Cells[r, c].AddComment("Tried to map CM Gum (Stamp): " + thisWS.Cells[r, c].Value + " to AMS gum code CM code found but AMS code blank in Gum_Codes table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
-                                            //thisWS.Cells[r, c].Comment[1].AutoFit = true;
-
-
-
-                                            nbrFatalErrors++;
-                                        }
-                                        //break;
+                                        thisWS.Cells[r, c].Value = GumCode;
+                                        thisWS.Cells[r, c].Interior.Color = Color.Blue;
                                     }
+                                    else
+                                    {
+                                        thisWS.Cells[r, c].Interior.Color = Color.Red;
+
+                                        //TODO: add row,column and heading to comment
+                                        //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
+                                        thisWS.Cells[r, c].ClearComments();
+                                        thisWS.Cells[r, c].AddComment("Tried to map CM Gum (Stamp): " + thisWS.Cells[r, gumStampCol].Value + " to AMS gum code CM code found but AMS code blank in Gum_Codes table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
+                                        //thisWS.Cells[r, c].Comment[1].AutoFit = true;
+
+
+
+                                        nbrFatalErrors++;
+                                    }
+                                    //break;
                                 }
-                                else
-                                {
-                                    //((Excel.Range)thisWS.Cells[r, c]).Interior.Color = Color.Red;
-                                    thisWS.Cells[r, c].Interior.Color = Color.Red;
+                            }
+                            else
+                            {
+                                //((Excel.Range)thisWS.Cells[r, c]).Interior.Color = Color.Red;
+                                thisWS.Cells[r, c].Interior.Color = Color.Red;
 
-                                    //TODO: add row,column and heading to comment
-                                    //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
-                                    thisWS.Cells[r, c].ClearComments();
-                                    //thisWS.Cells[r, c].AddComment("Tried to map CM consignment id: " + thisWS.Cells[r, c].Value + " to AMS consignment id - CM consignment id not found in Consignment table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
-                                    thisWS.Cells[r, c].AddComment("Tried to map CM Gum (Stamp): " + thisWS.Cells[r, c].Value + " to AMS gum code using table Gum_Codes. Mapping is required - please add mapping to table Gum_Codes and re-validate this spreadsheet");
+                                //TODO: add row,column and heading to comment
+                                //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
+                                thisWS.Cells[r, c].ClearComments();
+                                //thisWS.Cells[r, c].AddComment("Tried to map CM consignment id: " + thisWS.Cells[r, c].Value + " to AMS consignment id - CM consignment id not found in Consignment table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
+                                thisWS.Cells[r, c].AddComment("Tried to map CM Gum (Stamp): " + thisWS.Cells[r, c].Value + " to AMS gum code using table Gum_Codes. Mapping is required - please add mapping to table Gum_Codes and re-validate this spreadsheet");
 
-                                    //thisWS.Cells[r, c].Comment[1].AutoFit = true;
+                                //thisWS.Cells[r, c].Comment[1].AutoFit = true;
 
-                                    nbrFatalErrors++;
-                                }
-
-                                reader2.Close();
+                                nbrFatalErrors++;
                             }
 
-                            //%%%%%%%%%%%%%%%%%%%%%%%%%
-                            // https://drive.google.com/drive/folders/1grl8P1eV5HUsjd0_LlLPVHJfh9eukaPz
-                            // use the target name for test (i.e. CM.Stamp Symbol maps to SA.Condition)
-                            else if (thisWS.Cells[1, c].Value == "Symbol")
+                            reader2.Close();
+                        }
+                        //$$$$$$$$$$$$$$$
+                        else if (thisWS.Cells[1, c].Value == "AMS_Package_Type" && thisWS.Cells[r, packageTypeCol].Value != null) //only go after where CM hase set the gum code
+                        {
+                            PackageCode = "";
+                            packageUnits = 0;
+
+                            cmd2.CommandText = "SELECT AMS_Package_Code FROM dbo.Package_Codes where CM_Package_Code = '" + thisWS.Cells[r, packageTypeCol].Value + "'";
+                            reader2 = cmd2.ExecuteReader();
+
+                            if (reader2.HasRows)
                             {
-                                string symbols = thisWS.Cells[r, c].Value;
+                                while (reader2.Read())
+                                {
+
+                                    //CMCategoryTxt = reader2.GetString(1);
+                                    //SACategoryTxt = reader2.GetString(3);
+                                    //EBCategoryTxt = reader2.GetString(5);
+
+                                    PackageCode = reader2.GetString(0);         //assume it's not red alread because these was a value to lookup
+                                    if (PackageCode != "")
+                                    {
+                                        packageUnits = thisWS.Cells[r, packageUnitsCol].Value;
+                                        if (packageUnits > 1)
+                                        {
+                                            packageUnitsString = "(" + packageUnits.ToString() + ")";
+                                        }
+                                        thisWS.Cells[r, c].Value = PackageCode + packageUnitsString;
+                                        thisWS.Cells[r, c].Interior.Color = Color.Blue;
+                                        thisWS.Cells[r, c].ClearComments();
+                                        thisWS.Cells[r, c].AddComment("Mapped CM Package_Type: " + thisWS.Cells[r, packageTypeCol].Value + " to AMS Package_Type.");
+
+                                    }
+                                    else
+                                    {
+                                        thisWS.Cells[r, c].Interior.Color = Color.Red;
+
+                                        //TODO: add row,column and heading to comment
+                                        thisWS.Cells[r, c].ClearComments();
+                                        thisWS.Cells[r, c].AddComment("Tried to map CM Package_Type: " + thisWS.Cells[r, packageTypeCol].Value + " to AMS Package_Type. CM code found but AMS code blank in table Package_Codes. Mapping is required - please add mapping to table and re-validate this spreadsheet");
+                                        //thisWS.Cells[r, c].Comment[1].AutoFit = true;
+
+                                        nbrFatalErrors++;
+                                    }
+                                    //break;
+                                }
+                            
+                        }
+                        else
+                        {
+                            //((Excel.Range)thisWS.Cells[r, c]).Interior.Color = Color.Red;
+                            thisWS.Cells[r, c].Interior.Color = Color.Red;
+
+                            //TODO: add row,column and heading to comment
+                            //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
+                            thisWS.Cells[r, c].ClearComments();
+                            //thisWS.Cells[r, c].AddComment("Tried to map CM consignment id: " + thisWS.Cells[r, c].Value + " to AMS consignment id - CM consignment id not found in Consignment table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
+                            thisWS.Cells[r, c].AddComment("Tried to map CM Package_Type: " + thisWS.Cells[r, packageTypeCol].Value + " to AMS Package Tpe using table Package_Codes. Mapping is required - please add mapping to table Package_Codes and re-validate this spreadsheet");
+
+                            //thisWS.Cells[r, c].Comment[1].AutoFit = true;
+
+                            nbrFatalErrors++;
+                        }
+
+                        reader2.Close();
+                    }
+                        //$$$$$$$$$$$
+                        else if (thisWS.Cells[1, c].Value == "AMS_Net_Reserve_Ind")  //this will have been loaded with the reserve type from CM with default to false
+                        {
+                            if (thisWS.Cells[r, reserveTypeCol].Value == 2 || thisWS.Cells[r, reserveTypeCol].Value == 5)
+                            {
+                                thisWS.Cells[r, c].Value = "Y";
+                            }
+                            else
+                            {
+                                thisWS.Cells[r, c].Value = "N";
+                            }
+
+                            thisWS.Cells[r, c].ClearComments();
+                            thisWS.Cells[r, c].AddComment("Mapped CM Reserve type: " + thisWS.Cells[r, reserveTypeCol].Value + " to AMS Net Reserve Indicator");
+                            thisWS.Cells[r, c].Interior.Color = Color.Blue;
+                        }
+                        //*********************
+                        else if (thisWS.Cells[1, c].Value == "Derived Example")
+                        {
+                            //Note this field is defaulted to N
+                            nbrInternetPhotos = 0;
+                            nbrCatalogPhotos = 0;
+                            formatString = "";
+
+                            if (thisWS.Cells[r, nbrInternetPhotosCol].Value != null)
+                            {
+                                nbrInternetPhotos = thisWS.Cells[r, nbrInternetPhotosCol].Value;
+                            }
+                            if (thisWS.Cells[r, nbrCatalogPhotosCol].Value != null)
+                            {
+                                nbrCatalogPhotos = thisWS.Cells[r, nbrCatalogPhotosCol].Value;
+                            }
+                            if (thisWS.Cells[r, formatCol].Value != null) {
+                                formatString = thisWS.Cells[r, formatCol].Value;
+                            }
+
+                            //formatCol
+                            if (formatString == "z") //Collection automatically say example
+                            {
+                                thisWS.Cells[r, c].Value = 'Y';
+                                thisWS.Cells[r, c].ClearComments();
+                                thisWS.Cells[r, c].AddComment("Example set to Y because this lot is a collection");
+                                thisWS.Cells[r, c].Interior.Color = Color.Blue;
+                            }
+                            else if (nbrInternetPhotos > nbrCatalogPhotos)
+                            {
+                                thisWS.Cells[r, c].Value = 'Y';
+                                thisWS.Cells[r, c].ClearComments();
+                                thisWS.Cells[r, c].AddComment("Example set to Y because this lot has more internet photos than catalog photos");
+                                thisWS.Cells[r, c].Interior.Color = Color.Blue;
+                            }
+                        }
+                        //$$$$$$$
+                        else if (thisWS.Cells[1, c].Value == "SrtOrder")
+                        {
+                            if (thisWS.Cells[r, collectionTypeCol].Value != null)
+                            {
+                                if (thisWS.Cells[r, collectionTypeCol].Value == "z")
+                                {
+                                    thisWS.Cells[r, c].Value = thisWS.Cells[r, alphaTextCol].Value;
+                                    thisWS.Cells[r, c].ClearComments();
+                                    thisWS.Cells[r, c].AddComment("SrtOrder set to Alpha Text because this is a collection");
+                                    thisWS.Cells[r, c].Interior.Color = Color.Blue;
+                                }
+                                
+                                else
+                                {
+                                    thisWS.Cells[r, c].Value = thisWS.Cells[r, catalog1Col].Value;
+                                    thisWS.Cells[r, c].ClearComments();
+                                    thisWS.Cells[r, c].AddComment("SrtOrder set to Catalog 1 Number because this is not a collection");
+                                    thisWS.Cells[r, c].Interior.Color = Color.Blue;
+                                }
+                          
+                            }
+                        }
+                        //$$$$$$$$$$$$
+                        // https://drive.google.com/drive/folders/1grl8P1eV5HUsjd0_LlLPVHJfh9eukaPz
+                        // use the target name for test (i.e. CM.Stamp Symbol maps to SA.Condition)
+                        else if (thisWS.Cells[1, c].Value == "Symbol")
+                            {
+                                string symbols = thisWS.Cells[r, originalSymbolCol].Value;
                                 var imgs = new List<string>();
 
 
@@ -986,7 +1275,7 @@ namespace ExcelAddIn2
                                 if (imgs.Count > 0)
                                 {
 
-                                    origimg = thisWS.Cells[r, c].Value;
+                                    origimg = thisWS.Cells[r, originalSymbolCol].Value;
                                     thisWS.Cells[r, c].Value = ""; //clear out value
                                     thisWS.Cells[r, c].ClearComments();
                                     thisWS.Cells[r, c].AddComment("Original symbol before xform: " + origimg);

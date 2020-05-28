@@ -100,7 +100,7 @@
             this.Controls.Add(this.treeView1);
             this.Controls.Add(this.button1);
             this.Name = "Form1";
-            this.Text = "Form1";
+            this.Text = "Select AMS Category";
             this.ResumeLayout(false);
             this.PerformLayout();
 
