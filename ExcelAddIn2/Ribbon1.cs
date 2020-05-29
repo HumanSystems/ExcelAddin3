@@ -562,7 +562,7 @@ namespace ExcelAddIn2
                 {
                     for (int c = 1; c <= colCount; c++)
                     {
-                        thisWS.Cells[r, c].ClearComments();
+                        //thisWS.Cells[r, c].ClearComments();  --> Leave old comments - the only ones replaced will be when you re-transform
                         thisWS.Cells[r, c].Interior.Color = Color.Transparent;
                     }
                 }
@@ -617,41 +617,40 @@ namespace ExcelAddIn2
             }
 
             //get count of required columns to walk
-            int requiredCount = reqSaColName.Count;
+            //int requiredCount = reqSaColName.Count;
+            
 
+            ////*********************************************************************************************************************************************************
+            ////* Edit for required fields first
+            ////*********************************************************************************************************************************************************
+            ////System.Type type;
 
+            //for (int r = 2; r <= rowCount; r++)
+            //{
+            //    for (int c = 1; c <= colCount; c++)
+            //    {
+            //        // 3) Make sure all required fields are present
+            //        foreach (string reqSAName in reqSaColName)
+            //        {
+            //            //value = thisWS.Cells[r, c].Value;
+            //            //if ((c == reqSACol) && ((thisWS.Cells[r, c].Value == null) || (valueint == 0))) {
 
-            //*********************************************************************************************************************************************************
-            //* Edit for required fields first
-            //*********************************************************************************************************************************************************
-            //System.Type type;
+            //            //TODO --> type = (thisWS.Cells[r, c].Value).GetType;  //TODO: NEED TO CHECK FOR 0 IN SOME FIELDS I.E. SEQUENCE NBR
+            //            if (thisWS.Cells[1, c].Value == reqSAName && thisWS.Cells[r, c].Value == null)
+            //            {
+            //                ((Excel.Range)thisWS.Cells[r, c]).Interior.Color = Color.Red;
 
-            for (int r = 2; r <= rowCount; r++)
-            {
-                for (int c = 1; c <= colCount; c++)
-                {
-                    // 3) Make sure all required fields are present
-                    foreach (string reqSAName in reqSaColName)
-                    {
-                        //value = thisWS.Cells[r, c].Value;
-                        //if ((c == reqSACol) && ((thisWS.Cells[r, c].Value == null) || (valueint == 0))) {
+            //                //TODO: add row,column and heading to comment
+            //                String txt = thisWS.Cells[1, c].Value;
+            //                thisWS.Cells[r, c].ClearComments();
+            //                thisWS.Cells[r, c].AddComment(txt + " is required");
+            //                //((Excel.Range)ws.Cells[r, c]).Style.Name = "Normal"
 
-                        //TODO --> type = (thisWS.Cells[r, c].Value).GetType;  //TODO: NEED TO CHECK FOR 0 IN SOME FIELDS I.E. SEQUENCE NBR
-                        if (thisWS.Cells[1, c].Value == reqSAName && thisWS.Cells[r, c].Value == null)
-                        {
-                            ((Excel.Range)thisWS.Cells[r, c]).Interior.Color = Color.Red;
-
-                            //TODO: add row,column and heading to comment
-                            String txt = thisWS.Cells[1, c].Value;
-                            thisWS.Cells[r, c].ClearComments();
-                            thisWS.Cells[r, c].AddComment(txt + " is required");
-                            //((Excel.Range)ws.Cells[r, c]).Style.Name = "Normal"
-
-                            nbrFatalErrors++;
-                        }
-                    }
-                }
-            }
+            //                nbrFatalErrors++;
+            //            }
+            //        }
+            //    }
+            //}
 
             //****************************************************************************************************************************************************************************
             // Field Mapping exercises - IS Field title specific - no longer relies on column number
@@ -1174,32 +1173,33 @@ namespace ExcelAddIn2
                             }
                         }
                         //$$$$$$$
+                        //int catalog1Col = 0;
+                        //int collectionTypeCol = 0;
+                        //int alphaTextCol = 0;
                         else if (thisWS.Cells[1, c].Value == "SrtOrder")
                         {
-                            if (thisWS.Cells[r, collectionTypeCol].Value != null)
+                            if (thisWS.Cells[r, catalog1Col].Value != null)
                             {
-                                if (thisWS.Cells[r, collectionTypeCol].Value == "z")
+                                    thisWS.Cells[r, c].Value = thisWS.Cells[r, catalog1Col].Value;
+                                    thisWS.Cells[r, c].ClearComments();
+                                    thisWS.Cells[r, c].AddComment("SrtOrder set to Catalog 1 Value because catalog 1 number has been assigned");
+                                    thisWS.Cells[r, c].Interior.Color = Color.Blue;
+                            }
+                            else
+                            {
+                                if (thisWS.Cells[r, alphaTextCol].Value != null)
                                 {
                                     thisWS.Cells[r, c].Value = thisWS.Cells[r, alphaTextCol].Value;
                                     thisWS.Cells[r, c].ClearComments();
-                                    thisWS.Cells[r, c].AddComment("SrtOrder set to Alpha Text because this is a collection");
+                                    thisWS.Cells[r, c].AddComment("SrtOrder set to Alpha Text because catalog 1 number was not present and Alpha Text was present");
                                     thisWS.Cells[r, c].Interior.Color = Color.Blue;
                                 }
-                                
-                                else
-                                {
-                                    thisWS.Cells[r, c].Value = thisWS.Cells[r, catalog1Col].Value;
-                                    thisWS.Cells[r, c].ClearComments();
-                                    thisWS.Cells[r, c].AddComment("SrtOrder set to Catalog 1 Number because this is not a collection");
-                                    thisWS.Cells[r, c].Interior.Color = Color.Blue;
-                                }
-                          
                             }
                         }
                         //$$$$$$$$$$$$
                         // https://drive.google.com/drive/folders/1grl8P1eV5HUsjd0_LlLPVHJfh9eukaPz
                         // use the target name for test (i.e. CM.Stamp Symbol maps to SA.Condition)
-                        else if (thisWS.Cells[1, c].Value == "Symbol")
+                        else if (thisWS.Cells[1, c].Value == "Symbol" && thisWS.Cells[r, originalSymbolCol].Value != null)
                             {
                                 string symbols = thisWS.Cells[r, originalSymbolCol].Value;
                                 var imgs = new List<string>();
@@ -2083,6 +2083,42 @@ namespace ExcelAddIn2
             //        reader2.Close();
             //    }
             //}
+
+
+            //*********************************************************************************************************************************************************
+            //* Edit for required fields after xforms done now because you're not pre-stuffing xform fields so can re-validate cleanly
+            //*********************************************************************************************************************************************************
+            //System.Type type;
+
+            for (int r = 2; r <= rowCount; r++)
+            {
+                for (int c = 1; c <= colCount; c++)
+                {
+                    // 3) Make sure all required fields are present
+                    foreach (string reqSAName in reqSaColName)
+                    {
+                        //value = thisWS.Cells[r, c].Value;
+                        //if ((c == reqSACol) && ((thisWS.Cells[r, c].Value == null) || (valueint == 0))) {
+
+                        //TODO --> type = (thisWS.Cells[r, c].Value).GetType;  //TODO: NEED TO CHECK FOR 0 IN SOME FIELDS I.E. SEQUENCE NBR
+                        if (thisWS.Cells[1, c].Value == reqSAName && thisWS.Cells[r, c].Value == null)
+                        {
+                            ((Excel.Range)thisWS.Cells[r, c]).Interior.Color = Color.Red;
+
+                            //TODO: add row,column and heading to comment
+                            String txt = thisWS.Cells[1, c].Value;
+                            thisWS.Cells[r, c].ClearComments();
+                            thisWS.Cells[r, c].AddComment(txt + " is required");
+                            //((Excel.Range)ws.Cells[r, c]).Style.Name = "Normal"
+
+                            nbrFatalErrors++;
+                        }
+                    }
+                }
+            }
+
+
+
 
             //thisRowCount = thisRange.Rows.Count;
             //thisColCount = thisRange.Columns.Count;
