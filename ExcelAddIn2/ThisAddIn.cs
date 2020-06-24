@@ -26,23 +26,24 @@ namespace ExcelAddIn2
             //int colCount = thisRange.Columns.Count;
 
 
-            if (rowCount < 2)
+            if (thisWS.Name == "Kelleher Catalog Lots")
             {
-                Cancel = true;
-                MessageBox.Show("You haven't loaded data yet - please load data before you save anythin");
-                return;
-            }
+                if (rowCount < 2)
+                {
+                    Cancel = true;
+                    MessageBox.Show("You haven't loaded data yet for Kelleher Catalog Lots - please load data before you save anything");
+                    return;
+                }
 
-
-            if (Ribbon1.nbrFatalErrors != 0)
-            {
-                MessageBox.Show("WARNING! Workbook has " + Ribbon1.nbrFatalErrors.ToString() + " errors - please do not import it into AMS");
+                if (Ribbon1.nbrFatalErrors != 0)
+                {
+                    MessageBox.Show("WARNING! Workbook has " + Ribbon1.nbrFatalErrors.ToString() + " errors - please do not import it into AMS");
+                }
+                else
+                {
+                    MessageBox.Show("Workbook has 0 errors and is ready to import into AMS");
+                }
             }
-            else
-            {
-                MessageBox.Show("Workbook has 0 errors and is ready to import into AMS");
-            }
-
 
             //if (DialogResult.No == MessageBox.Show("Are you sure you want to " +
             //    "save the workbook?", "Example", MessageBoxButtons.YesNo))

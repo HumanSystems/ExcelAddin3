@@ -41,6 +41,8 @@ namespace ExcelAddIn2
             public bool mapDB;
             public bool SARequired;
             public string Note;
+            public string Definition;
+            public string CMSource;
         }
 
         OneColumnMap thisColumnMap;
@@ -85,19 +87,29 @@ namespace ExcelAddIn2
             int thisRowCount = thisRange.Rows.Count;
             int thisColCount = thisRange.Columns.Count;
 
+            thisWS.Name = "Kelleher Catalog Lots";
+
             //thisWS.Protect(UserInterfaceOnly: true, AllowFiltering: true, AllowSorting: true);
             thisWS.Unprotect();
 
+            thisRange.Clear();
+            thisRange = thisWS.UsedRange;
+            thisRowCount = thisRange.Rows.Count;
+            thisColCount = thisRange.Columns.Count;
+
+            nbrFatalErrors = 0;
+
+
             //** Clear Comments, Values and color because reloading data
-            for (int r = 1; r <= thisRowCount; r++)
-            {
-                for (int c = 1; c <= thisColCount; c++)
-                {
-                    thisWS.Cells[r, c].ClearComments();
-                    thisWS.Cells[r, c].Clear();
-                    thisWS.Cells[r, c].Interior.Color = Color.Transparent;
-                }
-            }
+            //for (int r = 1; r <= thisRowCount; r++)
+            //{
+            //    for (int c = 1; c <= thisColCount; c++)
+            //    {
+            //        thisWS.Cells[r, c].ClearComments();
+            //        thisWS.Cells[r, c].Clear();
+            //        thisWS.Cells[r, c].Interior.Color = Color.Transparent;
+            //    }
+            //}
 
 
             //1)BUILD ARRAY/INDEX OF EXCEL SA HEADING TO CM HEADING AND POPULATE SA HEADING FROM DATABASE
@@ -168,7 +180,7 @@ namespace ExcelAddIn2
             }
 
 
-
+            //TODO: should you keep this in?
             DialogResult dialogResult = MessageBox.Show("Dow you want to continue past headings?", "SHeadings Check", MessageBoxButtons.YesNo);
             if (dialogResult == DialogResult.No)
             {
@@ -202,13 +214,14 @@ namespace ExcelAddIn2
 
                 //%%%%%%%%%%%%%%% START LOOP HERE
 
-                //*var fromXlApp = new Excel.Application();
+                //var fromXlApp = new Excel.Application();
                 fromXlApp.Visible = false; //--> Don't need to see the Catalog Master excel file to suck it in
+                //fromXlWorkbook = fromXlApp.Workbooks.Open(filename);     this is the fully qualified (local) file name
+                fromXlWorkbook = fromXlApp.Workbooks.Open(@"C:\Users\Nicholas\Documents\My Documents\Describing Development\Excel SubProject\Catalog Master Upload Files\Sale 619 using SQL.xlsx");
 
-                fromXlWorkbook = fromXlApp.Workbooks.Open(filename);     //this is the fully qualified (local) file name
+                 Process fromPid = GetExcelProcess(fromXlApp);
 
-                Process fromPid = GetExcelProcess(fromXlApp);
-
+                int x = fromXlWorkbook.Sheets.Count;
                 fromXlWorksheet = fromXlWorkbook.Sheets[1];            //TODO: make sure only one worksheet???
                 fromXlRange = fromXlWorksheet.UsedRange;
 
@@ -264,7 +277,7 @@ namespace ExcelAddIn2
                 //SEE IF ANY HEADINGS ARE MAPPED FOR THIS "TO" ROW
                 foreach (OneColumnMap map in headingsMap)
                 {
-                    if (map.SAHead != "" && map.CMHead == "" && map.defaultValue == "")
+                    if (map.SAHead != "" && map.CMHead == "" && map.defaultValue == "")  //TODO: what is this???????????
                     {
                         continue;
                     }
@@ -281,7 +294,25 @@ namespace ExcelAddIn2
                                 SAHeadCol = i;
                             }
 
-                            if (fromXlRange.Cells[1, i].Value == map.CMHead)
+                            //int testcolCount = fromXlRange.Columns.Count;
+                            //MessageBox.Show("fromXlWorksheet.Cells[1, 10].Text: " + fromXlWorksheet.Cells[1, 10].Text.ToString());
+                            //MessageBox.Show("fromXlRange.Cells[1, 10].Text: " + fromXlRange.Cells[1, 10].Text.ToString());
+                            //MessageBox.Show("map.CMHead: " + map.CMHead);
+
+                            //Excel.Range testXlRange;
+                            //testXlRange = fromXlWorksheet.UsedRange;
+                            //if (fromXlRange.Cells[1, i].Value == map.CMHead)  
+                            //if (testXlRange.Cells[1, i].Value == map.CMHead)  
+
+                            //var x = fromXlWorksheet.Columns[1].Value;
+
+                            //((Excel.Range)thisWS.Cells[1, 1]).Value = ((Excel.Range)fromXlWorksheet.Cells[2, 1]).Value; --> fromXlWorksheet!!
+
+                            string xx = ((Excel.Range)fromXlWorksheet.Cells[1, i]).Text.ToString();
+
+                            //if (((Excel.Range)fromXlWorksheet.Cells[1, i]).Value == map.CMHead)
+                            if (((Excel.Range)fromXlWorksheet.Cells[1, i]).Value == map.CMHead)
+                            //if (fromXlRange.Cells[1, i].Value == map.CMHead)  
                             {
                                 CMHeadCol = i;
                             }
@@ -296,8 +327,28 @@ namespace ExcelAddIn2
                         {
                             for (int r = 2; r <= rowCount; r++)
                             {
-                                ((Excel.Range)thisWS.Cells[r, SAHeadCol]).Value = (fromXlRange.Cells[r, CMHeadCol].Value);
+                                ((Excel.Range)thisWS.Cells[r, SAHeadCol]).Value = (fromXlRange.Cells[r, CMHeadCol].Value);  //%%here it is
+
+                                
+
+                            switch (((Excel.Range)thisWS.Cells[r, SAHeadCol]).Text.ToString())
+                            {
+                                case "FALSE":
+                                    ((Excel.Range)thisWS.Cells[r, SAHeadCol]).Value = "0";
+                                    break;
+                                case "TRUE":
+                                    ((Excel.Range)thisWS.Cells[r, SAHeadCol]).Value = "1";
+                                    break;
+                                case "NULL":
+                                    ((Excel.Range)thisWS.Cells[r, SAHeadCol]).Value = "";
+                                    break;
+                                case "\\N":
+                                    ((Excel.Range)thisWS.Cells[r, SAHeadCol]).Value = "";
+                                    break;
+                                default:
+                                    break;
                             }
+                        }
                         }
 
                         SAHeadCol = 0;
@@ -419,7 +470,7 @@ namespace ExcelAddIn2
             cmd1.CommandType = CommandType.Text;
             cmd1.Connection = sqlConnection1;
             SqlDataReader reader1;
-            cmd1.CommandText = "SELECT SAColumnNbr,SAHeading,CMColumnNbr,CMHeading, Required, DefaultValue, mapDB, SARequired, Note FROM dbo.ExcelHeadingMap order by SAColumnNbr";
+            cmd1.CommandText = "SELECT SAColumnNbr,SAHeading,CMColumnNbr,CMHeading, Required, DefaultValue, mapDB, SARequired, Note, Definition, CMSource FROM dbo.ExcelHeadingMap order by SAColumnNbr";
             //TODO: Get New column Definition and append to column heads
 
 
@@ -446,6 +497,8 @@ namespace ExcelAddIn2
                     thisColumnMap.mapDB = (reader1.IsDBNull(6) ? false : reader1.GetBoolean(6));
                     thisColumnMap.SARequired = (reader1.IsDBNull(7) ? false : reader1.GetBoolean(7));
                     thisColumnMap.Note = (reader1.IsDBNull(8) ? "" : reader1.GetString(8));
+                    thisColumnMap.Definition = (reader1.IsDBNull(9) ? "" : reader1.GetString(9));
+                    thisColumnMap.CMSource = (reader1.IsDBNull(10) ? "" : reader1.GetString(10));
 
 
 
@@ -661,8 +714,8 @@ namespace ExcelAddIn2
             string PackageCode = "";
             //string EbayCategoryId = "";
             //int SAAuctionId = 0;
-            int SAConsignorId = 0;
-            int SAConsignmentId = 0;
+            //int SAConsignorId = 0;
+            //int SAConsignmentId = 0;
             //int SAPriceGuide1Id = 0;
             //int SAPriceGuide2Id = 0;
             //int SALOAProviderId = 0;
@@ -676,7 +729,7 @@ namespace ExcelAddIn2
             int formatCol = 0;
             int catalog1Col = 0;
             int collectionTypeCol = 0;
-            int alphaTextCol = 0;
+            //int alphaTextCol = 0;
             int originalSymbolCol = 0;
             int gumStampCol = 0;
             int packageTypeCol = 0;
@@ -698,26 +751,27 @@ namespace ExcelAddIn2
             int intSaleNo = 0;
             string SaleNo = String.Empty;
             //Console.WriteLine("First column count (colCount): {0}", colCount.ToString());
-            System.Diagnostics.Debug.WriteLine("First column count (colCount): {0}", colCount.ToString());
-            string testTitle = "";
+            //System.Diagnostics.Debug.WriteLine("First column count (colCount): {0}", colCount.ToString());
+            //string testTitle = "";
 
             for (int c = 1; c <= colCount; c++)
             {
 
 
                 //Console.WriteLine("Column: {0} has title {1}", c.ToString(), thisWS.Cells[1, c].Value);
-                testTitle = thisWS.Cells[1, c].Value;
-                System.Diagnostics.Debug.WriteLine("Column: {0}  ",c.ToString());
-                System.Diagnostics.Debug.WriteLine("Title: {0}  ", testTitle);
+                //testTitle = thisWS.Cells[1, c].Value;
+                //System.Diagnostics.Debug.WriteLine("Column: {0}  ",c.ToString());
+                //System.Diagnostics.Debug.WriteLine("Title: {0}  ", testTitle);
 
 
+                //Get column nbr of fields needed later for complext transformations. Also note fields that can be manually maintaing to unlock
                 //TODO FATAL ERROR IF N/F
                 //TODO: MAKE A SWITCH STMT 
                 if (thisWS.Cells[1, c].Value == "Sale_No") {
                     //Get the saleno by finding the Sale_No column and getting first row value
                     SaleNo = thisWS.Cells[2, c].Text.ToString();
                     continue;
-                }
+                }   //TODO: Determine if still need to allow SrtOrder to be editable
                 else if (thisWS.Cells[1, c].Value == "SrtOrder") {
                     //Create list of columns that can be directly changed
                     openColumns.Add(c);
@@ -732,11 +786,11 @@ namespace ExcelAddIn2
                     //get Est_Cons column to be used later for "Public Estimate 1 (Low)" if internet sale 
                     packageUnitsCol = c;
                 }
-                else if (thisWS.Cells[1, c].Value == "Nbr_photos_internet")
+                else if (thisWS.Cells[1, c].Value == "Nbr Photos Internet Actual")
                 {
                     nbrInternetPhotosCol = c;
                 }
-                else if (thisWS.Cells[1, c].Value == "Nbr_photos_catalog")
+                else if (thisWS.Cells[1, c].Value == "Nbr Photos Catalog Actual")
                 {
                     nbrCatalogPhotosCol = c;
                 }
@@ -752,10 +806,10 @@ namespace ExcelAddIn2
                 {
                     collectionTypeCol = c;
                 }
-                else if (thisWS.Cells[1, c].Value == "Alpha Text")
-                {
-                    alphaTextCol = c;
-                }
+                //else if (thisWS.Cells[1, c].Value == "Alpha Text")
+                //{
+                //    alphaTextCol = c;
+                //}
                 else if (thisWS.Cells[1, c].Value == "OriginalSymbols")
                 {
                     originalSymbolCol = c;
@@ -792,7 +846,7 @@ namespace ExcelAddIn2
 
 
             }
-            bool result = int.TryParse(SaleNo, out intSaleNo);  //TODO: TEST THE RECULT AND ABORT IF NOT INTEGRE
+            bool result = int.TryParse(SaleNo, out intSaleNo);  //TODO: TEST THE Saleno RESULT AND ABORT IF NOT INTEGER
 
 
             string t = "";
@@ -804,109 +858,109 @@ namespace ExcelAddIn2
                 for (int c = 1; c <= colCount; c++)
                 {
                     t = thisWS.Cells[1, c].Value;
-                    System.Diagnostics.Debug.WriteLine("XTitle: " + t);
+                    //System.Diagnostics.Debug.WriteLine("XTitle: " + t);
 
                     //WARNING!!! this test for nulls will knock out test if value is null - use a default if testing a field that might be null
                     //if ((thisWS.Cells[1, c].Value != null) && (thisWS.Cells[r, c].Value != null))   //mapped columns are required so will be red if not provided
                     if (thisWS.Cells[1, c].Value != null)    //mapped columns are required so will be red if not provided
                     {
 
-                        if (thisWS.Cells[1, c].Value == "Consignor")
-                        {
-                            SAConsignorId = 0;
+                        //if (thisWS.Cells[1, c].Value == "Consignor")
+                        //{
+                        //    SAConsignorId = 0;
 
-                            cmd2.CommandText = "SELECT SAId FROM dbo.Consignor where CMId = '" + thisWS.Cells[r, consignorNoCol].Value + "'";    //mapping step stuffed CM value, so now re-map
-                            reader2 = cmd2.ExecuteReader();
+                        //    cmd2.CommandText = "SELECT SAId FROM dbo.Consignor where CMId = '" + thisWS.Cells[r, consignorNoCol].Value + "'";    //mapping step stuffed CM value, so now re-map
+                        //    reader2 = cmd2.ExecuteReader();
 
 
-                            if (reader2.HasRows)
-                            {
-                                while (reader2.Read())
-                                {
+                        //    if (reader2.HasRows)
+                        //    {
+                        //        while (reader2.Read())
+                        //        {
 
-                                    //CMCategoryTxt = reader2.GetString(1);
-                                    //SACategoryTxt = reader2.GetString(3);
-                                    //EBCategoryTxt = reader2.GetString(5);
+                        //            //CMCategoryTxt = reader2.GetString(1);
+                        //            //SACategoryTxt = reader2.GetString(3);
+                        //            //EBCategoryTxt = reader2.GetString(5);
 
-                                    SAConsignorId = reader2.GetInt32(0);         //assume it's not red alread because these was a value to lookup
-                                    thisWS.Cells[r, c].Value = SAConsignorId;
-                                    thisWS.Cells[r, c].Interior.Color = Color.Blue;
-                                    thisWS.Cells[r, c].ClearComments();
-                                    thisWS.Cells[r, c].AddComment("Mapped CM consignor id: " + thisWS.Cells[r, consignorNoCol].Value + " to AMS consignor id");
+                        //            SAConsignorId = reader2.GetInt32(0);         //assume it's not red alread because these was a value to lookup
+                        //            thisWS.Cells[r, c].Value = SAConsignorId;
+                        //            thisWS.Cells[r, c].Interior.Color = Color.Blue;
+                        //            thisWS.Cells[r, c].ClearComments();
+                        //            thisWS.Cells[r, c].AddComment("Mapped CM consignor id: " + thisWS.Cells[r, consignorNoCol].Value + " to AMS consignor id");
 
-                                    //break;
-                                }
-                            }
-                            else
-                            {
-                                //((Excel.Range)thisWS.Cells[r, c]).Interior.Color = Color.Red;
-                                thisWS.Cells[r, c].Interior.Color = Color.Red;
+                        //            //break;
+                        //        }
+                        //    }
+                        //    else
+                        //    {
+                        //        //((Excel.Range)thisWS.Cells[r, c]).Interior.Color = Color.Red;
+                        //        thisWS.Cells[r, c].Interior.Color = Color.Red;
 
-                                //TODO: add row,column and heading to comment
-                                thisWS.Cells[r, c].ClearComments();
-                                thisWS.Cells[r, c].AddComment("Tried to map CM consignor id: " + thisWS.Cells[r, consignorNoCol].Value + " to AMS consignor id - consignor id not found in Consignor table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
+                        //        //TODO: add row,column and heading to comment
+                        //        thisWS.Cells[r, c].ClearComments();
+                        //        thisWS.Cells[r, c].AddComment("Tried to map CM consignor id: " + thisWS.Cells[r, consignorNoCol].Value + " to AMS consignor id - consignor id not found in Consignor table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
 
-                                thisWS.Cells[r, c].Comment[1].Style.Size.AutomaticSize = true;
+                        //        //thisWS.Cells[r, c].Comment[1].Style.Size.AutomaticSize = true;
 
-                                //thisWS.Cells[r, c].Comment[1].AutoFit = true;  --> this does not work
-                                //var comment = thisWS.Cell("A3").Comment;
-                                //comment.AddText("This is a very very very very very long line comment.");
-                                //comment.Style.Size.AutomaticSize = true;
+                        //        //thisWS.Cells[r, c].Comment[1].AutoFit = true;  --> this does not work
+                        //        //var comment = thisWS.Cell("A3").Comment;
+                        //        //comment.AddText("This is a very very very very very long line comment.");
+                        //        //comment.Style.Size.AutomaticSize = true;
 
-                                nbrFatalErrors++;
-                            }
+                        //        nbrFatalErrors++;
+                        //    }
 
-                            reader2.Close();
-                        }
+                        //    reader2.Close();
+                        //}
                         //$$$$$$$$$$$
-                        else if (thisWS.Cells[1, c].Value == "prop_num")
-                        {
-                            SAConsignmentId = 0;
+                        //else if (thisWS.Cells[1, c].Value == "prop_num")
+                        //{
+                        //    SAConsignmentId = 0;
 
 
-                            cmd2.CommandText = "SELECT SAId FROM dbo.Consignment where CMId = '" + thisWS.Cells[r, consignmentNoCol].Value + "'";    //mapping step stuffed CM value, so now re-map
-                            reader2 = cmd2.ExecuteReader();
+                        //    cmd2.CommandText = "SELECT SAId FROM dbo.Consignment where CMId = '" + thisWS.Cells[r, consignmentNoCol].Value + "'";    //mapping step stuffed CM value, so now re-map
+                        //    reader2 = cmd2.ExecuteReader();
 
 
-                            if (reader2.HasRows)
-                            {
-                                while (reader2.Read())
-                                {
+                        //    if (reader2.HasRows)
+                        //    {
+                        //        while (reader2.Read())
+                        //        {
 
-                                    //CMCategoryTxt = reader2.GetString(1);
-                                    //SACategoryTxt = reader2.GetString(3);
-                                    //EBCategoryTxt = reader2.GetString(5);
+                        //            //CMCategoryTxt = reader2.GetString(1);
+                        //            //SACategoryTxt = reader2.GetString(3);
+                        //            //EBCategoryTxt = reader2.GetString(5);
 
-                                    SAConsignmentId = reader2.GetInt32(0);         //assume it's not red alread because these was a value to lookup
-                                    thisWS.Cells[r, c].Value = SAConsignmentId;
-                                    thisWS.Cells[r, c].Interior.Color = Color.Blue;
-                                    thisWS.Cells[r, c].ClearComments();
-                                    thisWS.Cells[r, c].AddComment("Mapped CM consignment id: " + thisWS.Cells[r, consignmentNoCol].Value + " to AMS consignment id");
+                        //            SAConsignmentId = reader2.GetInt32(0);         //assume it's not red alread because these was a value to lookup
+                        //            thisWS.Cells[r, c].Value = SAConsignmentId;
+                        //            thisWS.Cells[r, c].Interior.Color = Color.Blue;
+                        //            thisWS.Cells[r, c].ClearComments();
+                        //            thisWS.Cells[r, c].AddComment("Mapped CM consignment id: " + thisWS.Cells[r, consignmentNoCol].Value + " to AMS consignment id");
 
-                                    //break;
-                                }
-                            }
-                            else
-                            {
-                                //((Excel.Range)thisWS.Cells[r, c]).Interior.Color = Color.Red;
-                                thisWS.Cells[r, c].Interior.Color = Color.Red;
+                        //            //break;
+                        //        }
+                        //    }
+                        //    else
+                        //    {
+                        //        //((Excel.Range)thisWS.Cells[r, c]).Interior.Color = Color.Red;
+                        //        thisWS.Cells[r, c].Interior.Color = Color.Red;
 
-                                //TODO: add row,column and heading to comment
-                                //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
-                                thisWS.Cells[r, c].ClearComments();
-                                thisWS.Cells[r, c].AddComment("Tried to map CM consignment id: " + thisWS.Cells[r, consignmentNoCol].Value + " to AMS consignment id - CM consignment id not found in Consignment table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
-                                thisWS.Cells[r, c].Interior.Color = Color.Red;
+                        //        //TODO: add row,column and heading to comment
+                        //        //((Excel.Range)thisWS.Cells[r, x]).AddComment(thisWS.Cells[r, c].Value + " is required") ;
+                        //        thisWS.Cells[r, c].ClearComments();
+                        //        thisWS.Cells[r, c].AddComment("Tried to map CM consignment id: " + thisWS.Cells[r, consignmentNoCol].Value + " to AMS consignment id - CM consignment id not found in Consignment table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
+                        //        thisWS.Cells[r, c].Interior.Color = Color.Red;
 
-                                thisWS.Cells[r, c].Comment[1].Style.Size.AutomaticSize = true; //TODO: autosize not working?
+                        //        //thisWS.Cells[r, c].Comment[1].Style.Size.AutomaticSize = true; //TODO: autosize not working?
 
 
-                                nbrFatalErrors++;
-                            }
+                        //        nbrFatalErrors++;
+                        //    }
 
-                            reader2.Close();
-                        }
+                        //    reader2.Close();
+                        //}
                         //**************
-                        else if (thisWS.Cells[1, c].Value == "Est_Low")
+                        if (thisWS.Cells[1, c].Value == "Est_Low")
                         {
                         if (intSaleNo > 3999)  //Internet sales use internale estimate
                             {
@@ -988,10 +1042,10 @@ namespace ExcelAddIn2
                             }
                             else
                             {
-                                thisWS.Cells[r, c].Value = "USD";
+                                thisWS.Cells[r, c].Value = "USD$";
                                 thisWS.Cells[r, c].Interior.Color = Color.Blue;
                                 thisWS.Cells[r, c].ClearComments();
-                                thisWS.Cells[r, c].AddComment("Public Kelleher, Private Treaty and Internet sales all use USD");
+                                thisWS.Cells[r, c].AddComment("Public Kelleher, Private Treaty and Internet sales all use USD$");
                             }
 
                         }
@@ -1055,7 +1109,7 @@ namespace ExcelAddIn2
 
                             reader2.Close();
                         }
-                        //$$$$$$$$$$$$$$$
+                        //** Note it is assumes that all package units will be at least 1
                         else if (thisWS.Cells[1, c].Value == "AMS_Package_Type" && thisWS.Cells[r, packageTypeCol].Value != null) //only go after where CM hase set the gum code
                         {
                             PackageCode = "";
@@ -1123,7 +1177,8 @@ namespace ExcelAddIn2
                         //$$$$$$$$$$$
                         else if (thisWS.Cells[1, c].Value == "AMS_Net_Reserve_Ind")  //this will have been loaded with the reserve type from CM with default to false
                         {
-                            if (thisWS.Cells[r, reserveTypeCol].Value == 2 || thisWS.Cells[r, reserveTypeCol].Value == 5)
+                            //if (thisWS.Cells[r, reserveTypeCol].Value == "2" || thisWS.Cells[r, reserveTypeCol].Value == "5")
+                            if (thisWS.Cells[r, reserveTypeCol].Text.ToString() == "2" || thisWS.Cells[r, reserveTypeCol].Text.ToString() == "5")
                             {
                                 thisWS.Cells[r, c].Value = "Y";
                             }
@@ -1153,22 +1208,30 @@ namespace ExcelAddIn2
                                 nbrCatalogPhotos = thisWS.Cells[r, nbrCatalogPhotosCol].Value;
                             }
                             if (thisWS.Cells[r, formatCol].Value != null) {
-                                formatString = thisWS.Cells[r, formatCol].Value;
+                                //formatString = thisWS.Cells[r, formatCol].Value;
+                                formatString = thisWS.Cells[r, formatCol].Text.ToString();
                             }
 
                             //formatCol
                             if (formatString == "z") //Collection automatically say example
                             {
-                                thisWS.Cells[r, c].Value = 'Y';
+                                thisWS.Cells[r, c].Value = "Y";
                                 thisWS.Cells[r, c].ClearComments();
-                                thisWS.Cells[r, c].AddComment("Example set to Y because this lot is a collection");
+                                thisWS.Cells[r, c].AddComment("Derived Example set to True because this lot is a collection");
                                 thisWS.Cells[r, c].Interior.Color = Color.Blue;
                             }
                             else if (nbrInternetPhotos > nbrCatalogPhotos)
                             {
-                                thisWS.Cells[r, c].Value = 'Y';
+                                thisWS.Cells[r, c].Value = "Y";
                                 thisWS.Cells[r, c].ClearComments();
-                                thisWS.Cells[r, c].AddComment("Example set to Y because this lot has more internet photos than catalog photos");
+                                thisWS.Cells[r, c].AddComment("Derived Example set to True because this lot has more internet photos than catalog photos");
+                                thisWS.Cells[r, c].Interior.Color = Color.Blue;
+                            }
+                            else
+                            {
+                                thisWS.Cells[r, c].Value = "N";
+                                thisWS.Cells[r, c].ClearComments();
+                                thisWS.Cells[r, c].AddComment("Derived Example set to False because its not a collection and internet photos not > catalog photos");
                                 thisWS.Cells[r, c].Interior.Color = Color.Blue;
                             }
                         }
@@ -1176,25 +1239,26 @@ namespace ExcelAddIn2
                         //int catalog1Col = 0;
                         //int collectionTypeCol = 0;
                         //int alphaTextCol = 0;
-                        else if (thisWS.Cells[1, c].Value == "SrtOrder")
+                        //for srtorder, use catalog value if not collection - leave blank if collection
+                        else if (thisWS.Cells[1, c].Value == "SrtOrder") 
                         {
-                            if (thisWS.Cells[r, catalog1Col].Value != null)
+                            if (thisWS.Cells[r, catalog1Col].Value != null && thisWS.Cells[r, collectionTypeCol].Value != "z")
                             {
                                     thisWS.Cells[r, c].Value = thisWS.Cells[r, catalog1Col].Value;
                                     thisWS.Cells[r, c].ClearComments();
-                                    thisWS.Cells[r, c].AddComment("SrtOrder set to Catalog 1 Value because catalog 1 number has been assigned");
+                                    thisWS.Cells[r, c].AddComment("SrtOrder set to Catalog 1 Value because catalog 1 number has been assigned and this is not a collection type (z) lot");
                                     thisWS.Cells[r, c].Interior.Color = Color.Blue;
                             }
-                            else
-                            {
-                                if (thisWS.Cells[r, alphaTextCol].Value != null)
-                                {
-                                    thisWS.Cells[r, c].Value = thisWS.Cells[r, alphaTextCol].Value;
-                                    thisWS.Cells[r, c].ClearComments();
-                                    thisWS.Cells[r, c].AddComment("SrtOrder set to Alpha Text because catalog 1 number was not present and Alpha Text was present");
-                                    thisWS.Cells[r, c].Interior.Color = Color.Blue;
-                                }
-                            }
+                            //else
+                            //{
+                            //    if (thisWS.Cells[r, alphaTextCol].Value != null)
+                            //    {
+                            //        thisWS.Cells[r, c].Value = thisWS.Cells[r, alphaTextCol].Value;
+                            //        thisWS.Cells[r, c].ClearComments();
+                            //        thisWS.Cells[r, c].AddComment("SrtOrder set to Alpha Text because catalog 1 number was not present and Alpha Text was present");
+                            //        thisWS.Cells[r, c].Interior.Color = Color.Blue;
+                            //    }
+                            //}
                         }
                         //$$$$$$$$$$$$
                         // https://drive.google.com/drive/folders/1grl8P1eV5HUsjd0_LlLPVHJfh9eukaPz
@@ -1256,7 +1320,7 @@ namespace ExcelAddIn2
                                         inbracket = false;
                                     }
                                     else
-                                        if (!inbracket && ch != '/' && ch != '\'')
+                                        if (!inbracket && ch != '/' && ch != '\'' && ch != '\"')
                                     {
                                         term += ch;
                                     }
@@ -2120,11 +2184,12 @@ namespace ExcelAddIn2
 
 
 
-            //thisRowCount = thisRange.Rows.Count;
-            //thisColCount = thisRange.Columns.Count;
-            //thisWS.Protect();  --> this protects the whole sheet
+            // In Excel, you can only effectively lock cells if you lock the worksheet.What you do is:
+            // Mark the cell ranges you don't want to lock as Locked = False
+            // Then protect the sheet using sheet.Protect(UserInterfaceOnly: true).
+            // thisWS.Protect();  --> this protects the whole sheet
             //https://stackoverflow.com/questions/44883664/how-to-lock-specific-rows-and-columns-using-excel-interop-c-sharp
-            foreach (int c in openColumns)
+                foreach (int c in openColumns)
             {
                 for (int r = 2; r <= rowCount; r++)
                 {
@@ -2138,7 +2203,9 @@ namespace ExcelAddIn2
             thisWS.Application.ActiveWindow.SplitRow = 1;
             thisWS.Application.ActiveWindow.FreezePanes = true;
 
-            // Now apply autofilter
+            // Now apply autofilter: true allows the user to set filters on the protected worksheet. 
+            // Users can change filter criteria but can not enable or disable an autofilter. 
+            // Users can set filters on an existing autofilter. 
             Excel.Range firstRow = (Excel.Range)thisWS.Rows[1];
             firstRow.AutoFilter(1,
                                 Type.Missing,
