@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+//using System.Linq;
+//using System.Text;
 using Microsoft.Office.Tools.Ribbon;
 using System.Windows.Forms;
 using Excel = Microsoft.Office.Interop.Excel;
@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 using System.Data;
 using System.Data.SqlClient;
 using System.Collections;
-using System.Xaml;
+//using System.Xaml;
 
 using System.Drawing;
 
@@ -63,6 +63,7 @@ namespace ExcelAddIn2
         //Excel.Worksheet thisWS = (Excel.Worksheet)Globals.ThisAddIn.Application.ActiveSheet;
 
 
+
         private void Ribbon1_Load(object sender, RibbonUIEventArgs e)
         {
 
@@ -73,6 +74,14 @@ namespace ExcelAddIn2
 
         private void btnLoadCatMast_Click(object sender, RibbonControlEventArgs e)
         {
+
+            //DialogResult dialogResultx = MessageBox.Show("Cancel out", "SHeadings Check", MessageBoxButtons.YesNo);
+            //if (dialogResultx == DialogResult.No)
+            //{
+            //    return;
+            //}
+
+            string machineName = Environment.MachineName;
 
             //Console.WriteLine("Into it");
             //System.Diagnostics.Debug.WriteLine("Fuck you");
@@ -176,11 +185,11 @@ namespace ExcelAddIn2
 
 
             //TODO: should you keep this in?
-            DialogResult dialogResult = MessageBox.Show("Dow you want to continue past headings?", "SHeadings Check", MessageBoxButtons.YesNo);
-            if (dialogResult == DialogResult.No)
-            {
-                return;
-            }
+            //DialogResult dialogResult = MessageBox.Show("Dow you want to continue past headings?", "SHeadings Check", MessageBoxButtons.YesNo);
+            //if (dialogResult == DialogResult.No)
+            //{
+            //    return;
+            //}
 
 
 
@@ -202,7 +211,8 @@ namespace ExcelAddIn2
                 //TODO: CHECK FILE NAME BEFORE OPENING AGAINST ??? TO MAKE SURE IT'S AN ?UNPROCESSED? ?NEW? ?WELL-NAMED? CATALOG MASTER FILE
                 //filename = openFileDialog1.FileName;
                 filename = fn;
-                MessageBox.Show("For pause - here is file name about to process: " + filename);
+
+                //MessageBox.Show("For pause - here is file name about to process: " + filename);
 
                 //excelApp.StatusBar = String.Format("Processing line {0} on {1}.",rows,rowNum);
                 Globals.ThisAddIn.Application.StatusBar = String.Format("Loading file {0}: {1}", filecount + 1, openFileDialog1.SafeFileNames[filecount]);
@@ -282,10 +292,10 @@ namespace ExcelAddIn2
                 foreach (OneColumnMap map in headingsMap)
                 {
                     //test
-                    if (map.SAHead == "OriginalSymbols" || map.CMHead == "Stamp Symbols")
-                    {
-                        MessageBox.Show("symbols!");
-                    }
+                    //if (map.SAHead == "OriginalSymbols" || map.CMHead == "Stamp Symbols")
+                    //{
+                    //    MessageBox.Show("symbols!");
+                    //}
 
                     if (map.SAHead != "" && map.CMHead == "" && map.defaultValue == "")  //TODO: what is this???????????
                     {
@@ -427,9 +437,10 @@ namespace ExcelAddIn2
                 //* This will check for missing values and also map database (id) values for category, auction/sale, consignor, consignment
                 //*************************************************************************************************************************************************************
 
-                MessageBox.Show("about to validate");
+                //MessageBox.Show("about to validate");
 
-                ValidateSpreadsheet(thisWS, true);
+                //ValidateSpreadsheet(thisWS, true);
+                ValidateSpreadsheet(true);
 
                 //((Excel.Range)thisWS.Cells[1, 1]).Value = "fUCKYOU";
                 //((Excel.Range)thisWS.Cells[1, 1]).Value = "fUCKYOU1";
@@ -517,8 +528,21 @@ namespace ExcelAddIn2
 
             headingsMap.Clear();
 
-            //SqlConnection sqlConnection1 = new SqlConnection("Data Source=MANCINI-AWARE ;Initial Catalog=Describing;Integrated Security=True");     ---> old one
-            SqlConnection sqlConnection1 = new SqlConnection("Data Source=MANCINI-AWARE\\SQLEXPRESS ;Initial Catalog=Describing;Integrated Security=True");
+            //SqlConnection sqlConnection1 = new SqlConnection("Data Source=MANCINI-AWARE\\SQLEXPRESS ;Initial Catalog=Describing;Integrated Security=True");
+
+            string conn = String.Empty;
+            if (Environment.MachineName == "MANCINI-AWARE")
+            {
+                conn = "Data Source=MANCINI-AWARE\\SQLEXPRESS ;Initial Catalog=Describing;Integrated Security=True";
+            }
+            else
+            {
+                conn = "Data Source=KELLY-FILE1\\SQLEXPRESS ;Initial Catalog=Describing;Integrated Security=True";
+
+            }
+
+            SqlConnection sqlConnection1 = new SqlConnection(conn);
+
             SqlCommand cmd1 = new SqlCommand();
             cmd1.CommandType = CommandType.Text;
             cmd1.Connection = sqlConnection1;
@@ -639,13 +663,14 @@ namespace ExcelAddIn2
         }
 
 
-        private void ValidateSpreadsheet(Excel.Worksheet thisWS2 = null, bool newData = false) //default in case hit Validate from Ribbon
+       // private void ValidateSpreadsheet(Excel.Worksheet thisWS2 = null, bool newData = false) //default in case hit Validate from Ribbon
+        private void ValidateSpreadsheet(bool newData = false) //default in case hit Validate from Ribbon
         {
             //((Excel.Range)thisWS2.Cells[r, map.SAPosition]).Value = (fromXlRange.Cells[r, map.CMPosition].Value); //THIS IS WHERE VALUE GET'S MOVED!!!
 
-            
+  
 
-            //Excel.Worksheet thisWS2 = (Excel.Worksheet)Globals.ThisAddIn.Application.ActiveSheet;
+            Excel.Worksheet thisWS2 = (Excel.Worksheet)Globals.ThisAddIn.Application.ActiveSheet;
             Excel.Range thisRange = thisWS2.UsedRange;
             int rowCount = thisRange.Rows.Count;
             int colCount = thisRange.Columns.Count;
@@ -702,8 +727,21 @@ namespace ExcelAddIn2
 
 
             //Set up connection for multiple queries
-            //SqlConnection sqlConnection2 = new SqlConnection("Data Source=MANCINI-AWARE;Initial Catalog=Describing;Integrated Security=True"); --> old one
-            SqlConnection sqlConnection2 = new SqlConnection("Data Source=MANCINI-AWARE\\SQLEXPRESS ;Initial Catalog=Describing;Integrated Security=True");
+            //SqlConnection sqlConnection2 = new SqlConnection("Data Source=MANCINI-AWARE\\SQLEXPRESS ;Initial Catalog=Describing;Integrated Security=True");
+
+            string conn = String.Empty;
+            if (Environment.MachineName == "MANCINI-AWARE")
+            {
+                conn = "Data Source=MANCINI-AWARE\\SQLEXPRESS ;Initial Catalog=Describing;Integrated Security=True";
+            }
+            else
+            {
+                conn = "Data Source=KELLY-FILE1\\SQLEXPRESS ;Initial Catalog=Describing;Integrated Security=True";
+
+            }
+
+            SqlConnection sqlConnection2 = new SqlConnection(conn);
+
 
             SqlCommand cmd2 = new SqlCommand();
             cmd2.CommandType = CommandType.Text;
@@ -1359,7 +1397,7 @@ namespace ExcelAddIn2
                             //formatCol
                             if (formatString == "z") //Collection automatically say example
                             {
-                                thisWS2.Cells[r, c].Value2 = "Y";
+                                thisWS2.Cells[r, c].Value2 = "W";
 
                                 //thisWS2.Cells[r, c].ClearComments();
                                 //thisWS2.Cells[r, c].AddComment("Derived Example set to True because this lot is a collection");
@@ -1430,7 +1468,7 @@ namespace ExcelAddIn2
                         //$$$$$$$$$$$$
                         // https://drive.google.com/drive/folders/1grl8P1eV5HUsjd0_LlLPVHJfh9eukaPz
                         // use the target name for test (i.e. CM.Stamp Symbol maps to SA.Condition)
-  
+                        //TODO: HOW TO TRY CATCH THESE IN CASE BAD EXCEL DATA!!!!!!!!!!!!!!!!!!!
                         else if (thisWS2.Cells[1, c].Value2 == "Symbol" && thisWS2.Cells[r, originalSymbolCol].Value2 != null)
                             {
                                 string symbols = thisWS2.Cells[r, originalSymbolCol].Value2;
@@ -2465,7 +2503,9 @@ namespace ExcelAddIn2
                 LoadHeadingMap();
             }
 
-            
+            //private void ValidateSpreadsheet(Excel.Worksheet thisWS2 = null, bool newData = false)
+
+
             ValidateSpreadsheet();
 
         }

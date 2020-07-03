@@ -52,9 +52,25 @@ namespace ExcelAddIn2
             //SqlConnection sqlConnection3 = new SqlConnection("Data Source=MANCINI-AWARE ;Initial Catalog=Describing;Integrated Security=True");
 
 
-            SqlConnection sqlConnection1 = new SqlConnection("Data Source=MANCINI-AWARE\\SQLEXPRESS ;Initial Catalog=Describing;Integrated Security=True");
-            SqlConnection sqlConnection2 = new SqlConnection("Data Source=MANCINI-AWARE\\SQLEXPRESS ;Initial Catalog=Describing;Integrated Security=True");
-            SqlConnection sqlConnection3 = new SqlConnection("Data Source=MANCINI-AWARE\\SQLEXPRESS ;Initial Catalog=Describing;Integrated Security=True");
+            //SqlConnection sqlConnection1 = new SqlConnection("Data Source=MANCINI-AWARE\\SQLEXPRESS ;Initial Catalog=Describing;Integrated Security=True");
+            //SqlConnection sqlConnection2 = new SqlConnection("Data Source=MANCINI-AWARE\\SQLEXPRESS ;Initial Catalog=Describing;Integrated Security=True");
+            //SqlConnection sqlConnection3 = new SqlConnection("Data Source=MANCINI-AWARE\\SQLEXPRESS ;Initial Catalog=Describing;Integrated Security=True");
+
+            string conn = String.Empty;
+            if (Environment.MachineName == "MANCINI-AWARE")
+            {
+                conn = "Data Source=MANCINI-AWARE\\SQLEXPRESS ;Initial Catalog=Describing;Integrated Security=True";
+            }
+            else
+            {
+                conn = "Data Source=KELLY-FILE1\\SQLEXPRESS ;Initial Catalog=Describing;Integrated Security=True";
+
+            }
+
+            SqlConnection sqlConnection1 = new SqlConnection(conn);
+            SqlConnection sqlConnection2 = new SqlConnection(conn);
+            SqlConnection sqlConnection3 = new SqlConnection(conn);
+
 
             SqlCommand cmd1 = new SqlCommand();
             cmd1.CommandType = CommandType.Text;
@@ -245,9 +261,26 @@ namespace ExcelAddIn2
             //SqlConnection sqlConnection3 = new SqlConnection("Data Source=MANCINI-AWARE ;Initial Catalog=Describing;Integrated Security=True");
 
 
-            SqlConnection sqlConnection1 = new SqlConnection("Data Source=MANCINI-AWARE\\SQLEXPRESS ;Initial Catalog=Describing;Integrated Security=True");
-            SqlConnection sqlConnection2 = new SqlConnection("Data Source=MANCINI-AWARE\\SQLEXPRESS ;Initial Catalog=Describing;Integrated Security=True");
-            SqlConnection sqlConnection3 = new SqlConnection("Data Source=MANCINI-AWARE\\SQLEXPRESS ;Initial Catalog=Describing;Integrated Security=True");
+            //SqlConnection sqlConnection1 = new SqlConnection("Data Source=MANCINI-AWARE\\SQLEXPRESS ;Initial Catalog=Describing;Integrated Security=True");
+            //SqlConnection sqlConnection2 = new SqlConnection("Data Source=MANCINI-AWARE\\SQLEXPRESS ;Initial Catalog=Describing;Integrated Security=True");
+            //SqlConnection sqlConnection3 = new SqlConnection("Data Source=MANCINI-AWARE\\SQLEXPRESS ;Initial Catalog=Describing;Integrated Security=True");
+
+
+            string conn = String.Empty;
+            if (Environment.MachineName == "MANCINI-AWARE")
+            {
+                conn = "Data Source=MANCINI-AWARE\\SQLEXPRESS ;Initial Catalog=Describing;Integrated Security=True";
+            }
+            else
+            {
+                conn = "Data Source=KELLY-FILE1\\SQLEXPRESS ;Initial Catalog=Describing;Integrated Security=True";
+
+            }
+
+            SqlConnection sqlConnection1 = new SqlConnection(conn);
+            SqlConnection sqlConnection2 = new SqlConnection(conn);
+            SqlConnection sqlConnection3 = new SqlConnection(conn);
+
 
             SqlCommand cmd1 = new SqlCommand();
             cmd1.CommandType = CommandType.Text;
