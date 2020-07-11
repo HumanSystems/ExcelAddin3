@@ -1408,6 +1408,19 @@ namespace ExcelAddIn2
                                 thisWS2.Cells[r, c].AddComment("Derived Example set to W because this lot is a collection");
 
                             }
+                            else if (nbrInternetPhotos > nbrCatalogPhotos && nbrCatalogPhotos == 0)
+                            {
+                                thisWS2.Cells[r, c].Value2 = "W";
+
+                                //thisWS2.Cells[r, c].ClearComments();
+                                //thisWS2.Cells[r, c].AddComment("Derived Example set to True because this lot has more internet photos than catalog photos");
+                                //thisWS2.Cells[r, c].Interior.Color = Color.Blue;
+
+                                ((Excel.Range)thisWS2.Cells[r, c]).Interior.Color = Color.Blue;
+                                ((Excel.Range)thisWS2.Cells[r, c]).ClearComments();
+                                thisWS2.Cells[r, c].AddComment("Derived Example set to W because this lot has more internet photos than catalog photos and catalog photos is 0");
+
+                            }
                             else if (nbrInternetPhotos > nbrCatalogPhotos)
                             {
                                 thisWS2.Cells[r, c].Value2 = "Y";
@@ -1426,7 +1439,7 @@ namespace ExcelAddIn2
                                 thisWS2.Cells[r, c].Value2 = "N";
 
                                 //thisWS2.Cells[r, c].ClearComments();
-                                //thisWS2.Cells[r, c].AddComment("Derived Example set to False because its not a collection and internet photos not > catalog photos");
+                                //thisWS2.Cells[r, c].AddComment("Derived Example set to N because its not a collection and internet photos not > catalog photos");
                                 //thisWS2.Cells[r, c].Interior.Color = Color.Blue;
 
                                 ((Excel.Range)thisWS2.Cells[r, c]).Interior.Color = Color.Blue;
