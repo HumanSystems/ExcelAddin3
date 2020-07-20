@@ -175,11 +175,13 @@ namespace ExcelAddIn2
 
                 if (map.CMHead != "")
                 {
-                    thisWS.Cells[1, map.SAPosition].AddComment("Pulled from Catalog Master field: " + map.CMHead + ".  " + map.Note);
+                    Excel.Comment comment = thisWS.Cells[1, map.SAPosition].AddComment("Pulled from Catalog Master field: " + map.CMHead + ".  " + map.Note);
+                    comment.Shape.TextFrame.AutoSize = true;
                 }
                 else
                 {
-                    thisWS.Cells[1, map.SAPosition].AddComment(map.Note);
+                    Excel.Comment comment = thisWS.Cells[1, map.SAPosition].AddComment(map.Note);
+                    comment.Shape.TextFrame.AutoSize = true;
                 }
             }
 
@@ -845,6 +847,7 @@ namespace ExcelAddIn2
             int consignmentNoCol = 0;
             int publicEstLowCol = 0;
             int publicEstHighCol = 0;
+            int lotDescCol = 0;
 
             //List of columns that can be maintained directly
             var openColumns = new List<int>();
@@ -969,12 +972,27 @@ namespace ExcelAddIn2
                 {
                     publicEstHighCol = c;
                 }
+                else if (heading == "Lot_Descr")
+                {
+                    lotDescCol = c;
+                }
 
 
 
             }
             bool result = int.TryParse(SaleNo, out intSaleNo);  //TODO: TEST THE Saleno RESULT AND ABORT IF NOT INTEGER
 
+            
+            //Size and autowrap all columns
+            for (int i = 1; i <= colCount; i++) // this will apply it from col 1 to 10
+            {
+                thisWS2.Columns[i].ColumnWidth = 25;
+            }
+            thisWS2.Columns[originalSymbolCol].ColumnWidth = 75;
+            thisWS2.Columns[lotDescCol].ColumnWidth = 75;
+            
+
+            thisWS2.Cells.Style.WrapText = true;   //this so comments will recognize line break
 
             string t = "";
             string u = thisWS2.Cells[2, originalSymbolCol].Value2;
@@ -1106,8 +1124,8 @@ namespace ExcelAddIn2
 
                                     ((Excel.Range)thisWS2.Cells[r, c]).Interior.Color = Color.Blue;
                                     ((Excel.Range)thisWS2.Cells[r, c]).ClearComments();
-                                    thisWS2.Cells[r, c].AddComment("Low Estimate derived from CM Estimate (Internal) because this is an Internet Sale");
-
+                                    Excel.Comment comment = thisWS2.Cells[r, c].AddComment("Low Estimate derived from CM Estimate (Internal) because this is an Internet Sale");
+                                    comment.Shape.TextFrame.AutoSize = true;
                                 }
                                 else
                                 {
@@ -1117,8 +1135,9 @@ namespace ExcelAddIn2
 
                                     ((Excel.Range)thisWS2.Cells[r, c]).Interior.Color = Color.Red;
                                     ((Excel.Range)thisWS2.Cells[r, c]).ClearComments();
-                                    thisWS2.Cells[r, c].AddComment("Low Estimate could not be derived from CM Estimate (Internal) for Internet sale because field is empty");
-
+                                    Excel.Comment comment = thisWS2.Cells[r, c].AddComment("Low Estimate could not be derived from CM Estimate (Internal) for Internet sale because field is empty");
+                                    comment.Shape.TextFrame.AutoSize = true;
+                                    nbrFatalErrors++;
 
                                 }
                             }
@@ -1135,7 +1154,8 @@ namespace ExcelAddIn2
                                     
                                     ((Excel.Range)thisWS2.Cells[r, c]).Interior.Color = Color.Blue;
                                     ((Excel.Range)thisWS2.Cells[r, c]).ClearComments();
-                                    thisWS2.Cells[r, c].AddComment("Low Estimate derived from Public Estimate (Low) because this is a Public Sale");
+                                    Excel.Comment comment = thisWS2.Cells[r, c].AddComment("Low Estimate derived from Public Estimate (Low) because this is a Public Sale");
+                                    comment.Shape.TextFrame.AutoSize = true;
                                 }
                                 else
                                 {
@@ -1145,8 +1165,9 @@ namespace ExcelAddIn2
 
                                     ((Excel.Range)thisWS2.Cells[r, c]).Interior.Color = Color.Blue;
                                     ((Excel.Range)thisWS2.Cells[r, c]).ClearComments();
-                                    thisWS2.Cells[r, c].AddComment("Low Estimate could not be derived from CM Public Estimate (Low) for public sale because field is empty");
-
+                                    Excel.Comment comment = thisWS2.Cells[r, c].AddComment("Low Estimate could not be derived from CM Public Estimate (Low) for public sale because field is empty");
+                                    comment.Shape.TextFrame.AutoSize = true;
+                                    nbrFatalErrors++;
                                 }
                             }
                             
@@ -1166,7 +1187,8 @@ namespace ExcelAddIn2
 
                                 ((Excel.Range)thisWS2.Cells[r, c]).Interior.Color = Color.Blue;
                                 ((Excel.Range)thisWS2.Cells[r, c]).ClearComments();
-                                thisWS2.Cells[r, c].AddComment("High Estimate is not used because this is an Internet Sale");
+                                Excel.Comment comment = thisWS2.Cells[r, c].AddComment("High Estimate is not used because this is an Internet Sale");
+                                comment.Shape.TextFrame.AutoSize = true;
                             }
                             else
                             {
@@ -1180,7 +1202,8 @@ namespace ExcelAddIn2
 
                                     ((Excel.Range)thisWS2.Cells[r, c]).Interior.Color = Color.Blue;
                                     ((Excel.Range)thisWS2.Cells[r, c]).ClearComments();
-                                    thisWS2.Cells[r, c].AddComment("High Estimate derived from Public Estimate (High) because this is a Public Sale");
+                                    Excel.Comment comment = thisWS2.Cells[r, c].AddComment("High Estimate derived from Public Estimate (High) because this is a Public Sale");
+                                    comment.Shape.TextFrame.AutoSize = true;
                                 }
                                 else
                                 {
@@ -1190,7 +1213,10 @@ namespace ExcelAddIn2
 
                                     ((Excel.Range)thisWS2.Cells[r, c]).Interior.Color = Color.Red;
                                     ((Excel.Range)thisWS2.Cells[r, c]).ClearComments();
-                                    thisWS2.Cells[r, c].AddComment("High Estimate could not be derived from CM Public Estimate (High) for public sale because field is empty");
+                                    Excel.Comment comment = thisWS2.Cells[r, c].AddComment("High Estimate could not be derived from CM Public Estimate (High) for public sale because field is empty");
+                                    comment.Shape.TextFrame.AutoSize = true;
+
+                                    nbrFatalErrors++;
                                 }
                             }
                         }
@@ -1208,7 +1234,8 @@ namespace ExcelAddIn2
 
                                 ((Excel.Range)thisWS2.Cells[r, c]).Interior.Color = Color.Blue;
                                 ((Excel.Range)thisWS2.Cells[r, c]).ClearComments();
-                                thisWS2.Cells[r, c].AddComment("Public Hong Kong sale uses HK$");
+                                Excel.Comment comment = thisWS2.Cells[r, c].AddComment("Public Hong Kong sale number (1-100) uses HK$");
+                                comment.Shape.TextFrame.AutoSize = true;
                             }
                             else
                             {
@@ -1220,7 +1247,8 @@ namespace ExcelAddIn2
 
                                 ((Excel.Range)thisWS2.Cells[r, c]).Interior.Color = Color.Blue;
                                 ((Excel.Range)thisWS2.Cells[r, c]).ClearComments();
-                                thisWS2.Cells[r, c].AddComment("Public Kelleher, Private Treaty and Internet sales all use USD$");
+                                Excel.Comment comment = thisWS2.Cells[r, c].AddComment("Public Kelleher, Private Treaty and Internet sales all use USD$");
+                                comment.Shape.TextFrame.AutoSize = true;
                             }
 
                         }
@@ -1249,8 +1277,10 @@ namespace ExcelAddIn2
                                         thisWS2.Cells[r, c].Value2 = GumCode;
                                         //thisWS2.Cells[r, c].Interior.Color = Color.Blue;
                                         ((Excel.Range)thisWS2.Cells[r, c]).Interior.Color = Color.Blue;
-                                        //((Excel.Range)thisWS2.Cells[r, c]).ClearComments();
+                                        ((Excel.Range)thisWS2.Cells[r, c]).ClearComments();
                                         //thisWS2.Cells[r, c].AddComment("Does this need a comment?");
+                                        Excel.Comment comment = thisWS2.Cells[r, c].AddComment("Gum code : " + GumCode + " found mapped to source Gum (Stamps): " + thisWS2.Cells[r, gumStampCol].Value);
+                                        comment.Shape.TextFrame.AutoSize = true;
                                     }
                                     else
                                     {
@@ -1260,9 +1290,8 @@ namespace ExcelAddIn2
 
                                         ((Excel.Range)thisWS2.Cells[r, c]).Interior.Color = Color.Red;
                                         ((Excel.Range)thisWS2.Cells[r, c]).ClearComments();
-                                        thisWS2.Cells[r, c].AddComment("Tried to map CM Gum (Stamp): " + thisWS2.Cells[r, gumStampCol].Value2 + " to AMS gum code CM code found but AMS code blank in Gum_Codes table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
-
-
+                                        Excel.Comment comment = thisWS2.Cells[r, c].AddComment("Tried to map CM Gum (Stamp): " + thisWS2.Cells[r, gumStampCol].Value2 + " to AMS gum code CM code found but AMS code blank in Gum_Codes table. Mapping is required - please add mapping to table and re-validate this spreadsheet");
+                                        comment.Shape.TextFrame.AutoSize = true;
                                         nbrFatalErrors++;
                                     }
                                     //break;
@@ -1276,9 +1305,8 @@ namespace ExcelAddIn2
 
                                 ((Excel.Range)thisWS2.Cells[r, c]).Interior.Color = Color.Red;
                                 ((Excel.Range)thisWS2.Cells[r, c]).ClearComments();
-                                thisWS2.Cells[r, c].AddComment("Tried to map CM Gum (Stamp): " + thisWS2.Cells[r, c].Value + " to AMS gum code using table Gum_Codes. Mapping is required - please add mapping to table Gum_Codes and re-validate this spreadsheet");
-
-
+                                Excel.Comment comment = thisWS2.Cells[r, c].AddComment("Tried to map CM Gum (Stamp): " + thisWS2.Cells[r, c].Value + " to AMS gum code using table Gum_Codes. Mapping is required - please add mapping to table Gum_Codes and re-validate this spreadsheet");
+                                comment.Shape.TextFrame.AutoSize = true;
                                 nbrFatalErrors++;
                             }
 
@@ -1317,9 +1345,8 @@ namespace ExcelAddIn2
 
                                         ((Excel.Range)thisWS2.Cells[r, c]).Interior.Color = Color.Blue;
                                         ((Excel.Range)thisWS2.Cells[r, c]).ClearComments();
-                                        thisWS2.Cells[r, c].AddComment("Mapped CM Package_Type: " + thisWS2.Cells[r, packageTypeCol].Value2 + " to AMS Package_Type.");
-
-
+                                        Excel.Comment comment = thisWS2.Cells[r, c].AddComment("Mapped CM Package_Type: " + thisWS2.Cells[r, packageTypeCol].Value2 + " to AMS Package_Type.");
+                                        comment.Shape.TextFrame.AutoSize = true;
                                     }
                                     else
                                     {
@@ -1329,8 +1356,8 @@ namespace ExcelAddIn2
 
                                         ((Excel.Range)thisWS2.Cells[r, c]).Interior.Color = Color.Red;
                                         ((Excel.Range)thisWS2.Cells[r, c]).ClearComments();
-                                        thisWS2.Cells[r, c].AddComment("Tried to map CM Package_Type: " + thisWS2.Cells[r, packageTypeCol].Value2 + " to AMS Package_Type. CM code found but AMS code blank in table Package_Codes. Mapping is required - please add mapping to table and re-validate this spreadsheet");
-
+                                        Excel.Comment comment = thisWS2.Cells[r, c].AddComment("Tried to map CM Package_Type: " + thisWS2.Cells[r, packageTypeCol].Value2 + " to AMS Package_Type. \r\n  CM code found but AMS code blank in table Package_Codes. /r/n Mapping is required - please add mapping to table and re-validate this spreadsheet");
+                                        comment.Shape.TextFrame.AutoSize = true;
                                         nbrFatalErrors++;
                                     }
                                     //break;
@@ -1345,8 +1372,8 @@ namespace ExcelAddIn2
 
                             ((Excel.Range)thisWS2.Cells[r, c]).Interior.Color = Color.Red;
                             ((Excel.Range)thisWS2.Cells[r, c]).ClearComments();
-                            thisWS2.Cells[r, c].AddComment("Tried to map CM Package_Type: " + thisWS2.Cells[r, packageTypeCol].Value2 + " to AMS Package_Type. CM code found but AMS code blank in table Package_Codes. Mapping is required - please add mapping to table and re-validate this spreadsheet");
-
+                            Excel.Comment comment = thisWS2.Cells[r, c].AddComment("Tried to map CM Package_Type: " + thisWS2.Cells[r, packageTypeCol].Value2 + " to AMS Package_Type. \r\n  CM code found but AMS code blank in table Package_Codes./r/n Mapping is required - please add mapping to table and re-validate this spreadsheet");
+                            comment.Shape.TextFrame.AutoSize = true;
                             nbrFatalErrors++;
                         }
 
@@ -1369,9 +1396,8 @@ namespace ExcelAddIn2
 
                             ((Excel.Range)thisWS2.Cells[r, c]).Interior.Color = Color.Blue;
                             ((Excel.Range)thisWS2.Cells[r, c]).ClearComments();
-                            thisWS2.Cells[r, c].AddComment("Mapped CM Reserve type: " + thisWS2.Cells[r, reserveTypeCol].Value2 + " to AMS Net Reserve Indicator");
-
-
+                            Excel.Comment comment = thisWS2.Cells[r, c].AddComment("Mapped CM Reserve type: " + thisWS2.Cells[r, reserveTypeCol].Value2 + " to AMS Net Reserve Indicator. \r\n  2 or 5 is Y for net reserve indicator, otherwise N");
+                            comment.Shape.TextFrame.AutoSize = true;
                         }
                         //*********************
                         else if (thisWS2.Cells[1, c].Value == "Derived Example")
@@ -1405,8 +1431,8 @@ namespace ExcelAddIn2
 
                                 ((Excel.Range)thisWS2.Cells[r, c]).Interior.Color = Color.Blue;
                                 ((Excel.Range)thisWS2.Cells[r, c]).ClearComments();
-                                thisWS2.Cells[r, c].AddComment("Derived Example set to W because this lot is a collection");
-
+                                Excel.Comment comment = thisWS2.Cells[r, c].AddComment("Derived Example set to W (web only) because this lot is a collection");
+                                comment.Shape.TextFrame.AutoSize = true;
                             }
                             else if (nbrInternetPhotos > nbrCatalogPhotos && nbrCatalogPhotos == 0)
                             {
@@ -1418,8 +1444,8 @@ namespace ExcelAddIn2
 
                                 ((Excel.Range)thisWS2.Cells[r, c]).Interior.Color = Color.Blue;
                                 ((Excel.Range)thisWS2.Cells[r, c]).ClearComments();
-                                thisWS2.Cells[r, c].AddComment("Derived Example set to W because this lot has more internet photos than catalog photos and catalog photos is 0");
-
+                                Excel.Comment comment = thisWS2.Cells[r, c].AddComment("Derived Example set to W (web only) because this lot has more internet photos than catalog photos and catalog photos is 0");
+                                comment.Shape.TextFrame.AutoSize = true;
                             }
                             else if (nbrInternetPhotos > nbrCatalogPhotos)
                             {
@@ -1431,8 +1457,8 @@ namespace ExcelAddIn2
 
                                 ((Excel.Range)thisWS2.Cells[r, c]).Interior.Color = Color.Blue;
                                 ((Excel.Range)thisWS2.Cells[r, c]).ClearComments();
-                                thisWS2.Cells[r, c].AddComment("Derived Example set to Y because this lot has more internet photos than catalog photos");
-
+                                Excel.Comment comment = thisWS2.Cells[r, c].AddComment("Derived Example set to Y because this lot has more internet photos than catalog photos, and catalog photos > 0");
+                                comment.Shape.TextFrame.AutoSize = true;
                             }
                             else
                             {
@@ -1444,8 +1470,8 @@ namespace ExcelAddIn2
 
                                 ((Excel.Range)thisWS2.Cells[r, c]).Interior.Color = Color.Blue;
                                 ((Excel.Range)thisWS2.Cells[r, c]).ClearComments();
-                                thisWS2.Cells[r, c].AddComment("Derived Example set to N because its not a collection and internet photos not > catalog photos");
-
+                                Excel.Comment comment = thisWS2.Cells[r, c].AddComment("Derived Example set to N because its not a collection and internet photos not > catalog photos");
+                                comment.Shape.TextFrame.AutoSize = true;
                             }
                         }
                         //$$$$$$$
@@ -1465,7 +1491,8 @@ namespace ExcelAddIn2
 
                                 ((Excel.Range)thisWS2.Cells[r, c]).Interior.Color = Color.Blue;
                                 ((Excel.Range)thisWS2.Cells[r, c]).ClearComments();
-                                thisWS2.Cells[r, c].AddComment("SrtOrder set to Catalog 1 Value because catalog 1 number has been assigned and this is not a collection type (z) lot");
+                                Excel.Comment comment = thisWS2.Cells[r, c].AddComment("SrtOrder set to Catalog 1 Value because catalog 1 number has been \r\n assigned and this is not a collection type (z) lot. \r\n Note Collection lots will not get assigned SrtOrder even if Catalog 1 value is present");
+                                comment.Shape.TextFrame.AutoSize = true;
                             }
                             //else
                             //{
@@ -1626,6 +1653,8 @@ namespace ExcelAddIn2
 
                                                 imgid = reader2.GetString(0);              //Note EBay id is string until further known
                                                 newSymbols = newSymbols + imgid + ",";
+                                            newComment = newComment + " Mapped to " + imgid + ";";
+
                                             //thisWS2.Cells[r, c].ClearComments();
                                             //thisWS2.Cells[r, c].Interior.Color = Color.BurlyWood;
                                             //((Excel.Range)thisWS2.Cells[r, c]).Interior.Color = Color.BurlyWood;
@@ -1668,10 +1697,13 @@ namespace ExcelAddIn2
 
                                 //thisWS2.Cells[r, c].AddComment(newComment); //--> OLD WAY STOPPED WORKING
                                 //((Excel.Range)fromXlWorksheet.Cells[1, i]).Value --> PROTOTYPE
-                                //((Excel.Range)thisWS2.Cells[r, c]).AddComment("fuck");
+                                thisWS2.Cells[r, c].ClearComments();
+                                Excel.Comment comment = ((Excel.Range)thisWS2.Cells[r, c]).AddComment(newComment);
+                                comment.Shape.TextFrame.AutoSize = true;
                                 if (wasError)
                                 {
                                     thisWS2.Cells[r, c].Interior.Color = Color.Red;
+                                    nbrFatalErrors++;
                                 }
                                 else
                                 {
@@ -2475,13 +2507,13 @@ namespace ExcelAddIn2
 
             thisWS2.Protect(UserInterfaceOnly: true, AllowFiltering: true, AllowSorting: true);
 
-           
+
 
             //AllowFormattingCells: true
             //Contents: false
 
 
-
+            
 
             Globals.ThisAddIn.Application.StatusBar = String.Format("Validation is complete. The Number of errors is: {0}", nbrFatalErrors.ToString());
 
@@ -2520,6 +2552,8 @@ namespace ExcelAddIn2
 
 
             ValidateSpreadsheet();
+
+           
 
         }
 
