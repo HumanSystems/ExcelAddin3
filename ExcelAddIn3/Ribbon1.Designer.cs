@@ -66,7 +66,7 @@
             // 
             // btnVerify
             // 
-            this.btnVerify.Label = "2) (Re)Verify Data";
+            this.btnVerify.Label = "2) (ReFuck)Verify Data";
             this.btnVerify.Name = "btnVerify";
             this.btnVerify.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btnVerify_Click_1);
             // 
@@ -74,7 +74,7 @@
             // 
             this.btnSelectCategory.Label = "3) Select/Populate category for rows in filter";
             this.btnSelectCategory.Name = "btnSelectCategory";
-            this.btnSelectCategory.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btnSelectCategory_Click_1);
+            //this.btnSelectCategory.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btnSelectCategory_Click_1);
             // 
             // Ribbon1
             // 

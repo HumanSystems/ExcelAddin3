@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27703.2047
+VisualStudioVersion = 15.0.28307.438
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExcelAddIn2", "ExcelAddIn2\ExcelAddIn2.csproj", "{B526320D-5FD9-48C7-938A-3A36F5D25DF3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExcelAddIn3", "ExcelAddIn3.csproj", "{B526320D-5FD9-48C7-938A-3A36F5D25DF3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -20,6 +20,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {941B196C-AF18-4D5B-8867-8887A3BDB6E0}
+		SolutionGuid = {3564E219-4CE8-47FC-B38D-9A56ED8B84FB}
 	EndGlobalSection
 EndGlobal
