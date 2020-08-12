@@ -742,15 +742,15 @@ namespace ExcelAddIn2
 
             }
 
-            SqlConnection sqlConnection2 = new SqlConnection(conn);
+            //SqlConnection sqlConnection2 = new SqlConnection(conn);
 
 
-            SqlCommand cmd2 = new SqlCommand();
-            cmd2.CommandType = CommandType.Text;
-            cmd2.Connection = sqlConnection2;
-            sqlConnection2.Open();
+            //SqlCommand cmd2 = new SqlCommand();
+            //cmd2.CommandType = CommandType.Text;
+            //cmd2.Connection = sqlConnection2;
+            //sqlConnection2.Open();
 
-            SqlDataReader reader2;
+            //SqlDataReader reader2;
 
 
 
@@ -838,7 +838,7 @@ namespace ExcelAddIn2
             //int formatCol = 0;
             //int catalog1Col = 0;
             //int collectionTypeCol = 0;
-            int originalSymbolCol = 0;
+            //int originalSymbolCol = 0;
             //int gumStampCol = 0;
             //int packageTypeCol = 0;
             //int reserveTypeCol = 0;
@@ -912,7 +912,7 @@ namespace ExcelAddIn2
                 {
                     endnbrCol = c;
                 }
-                else if (heading == "HSAM")
+                else if (heading == "TAG")
                 {
                     hsamCol = c;
                 }
@@ -972,7 +972,8 @@ namespace ExcelAddIn2
                                     //<img src="http://www.kelleherauctions.com/images/mint.gif" align="top">
                                     string imgname = "";        //TODO: SHOULD DEFINE THESE OUTSIDE OF WHILE?
                                     //int start = i + 45;
-                                    int space = symbols.IndexOf(" ", i);
+                                    //int space = symbols.IndexOf(" ", i);
+                                    int space = symbols.IndexOfAny(new char[] { ' ', ',', '#' }, i+1);
                                 //backslash += 1;
                                 //int period = symbols.IndexOf(".", start);
                                 //int displace = 0;
@@ -1157,7 +1158,7 @@ namespace ExcelAddIn2
                         else if (thisWS2.Cells[1, c].Value2 == "InQuote" && thisWS2.Cells[r, itemtitleCol].Value2 != null)
                         {
                             string symbols = thisWS2.Cells[r, itemtitleCol].Value2;
-                            var imgs = new List<string>();
+                            //var imgs = new List<string>();
 
 
                             int startquote = 0;
@@ -1172,12 +1173,58 @@ namespace ExcelAddIn2
                                 {
                                     string quoted = "";        //TODO: SHOULD DEFINE THESE OUTSIDE OF WHILE?
                                     int length = endquote - startquote;
-                                    quoted = symbols.Substring(startquote, length);
+                                    quoted = symbols.Substring(startquote + 1, length -1);
                                     thisWS2.Cells[r, c].Value = quoted;
                                 }
                             }
                         }
+                        else if (thisWS2.Cells[1, c].Value2 == "EndNbr" && thisWS2.Cells[r, itemtitleCol].Value2 != null)
+                        {
+                            string symbols = thisWS2.Cells[r, itemtitleCol].Value2;
+
+
+                            int length = symbols.Length;
+                            int lastspace = symbols.LastIndexOf(" ");
+                            int wordlength = 0;
+
+                            if (lastspace != -1 )
+                            {
+                                wordlength = length - (lastspace + 1);
+                                //if (wordlength == 4 && symbols.Substring(lastspace + 1, 4) == "HSAM")
+                                if (wordlength < 5 || wordlength > 7)
+                                {
+                                    string tagvalue = symbols.Substring(lastspace + 1, wordlength);
+
+                                    int secondlastspace = symbols.LastIndexOf(" ", lastspace -1);
+                                    if (secondlastspace != -1)
+                                    {
+                                        wordlength = lastspace - (secondlastspace + 1);
+                                        if (wordlength < 8 && wordlength > 4)
+                                        {
+                                            string itemid = symbols.Substring(secondlastspace + 1, wordlength);
+                                            thisWS2.Cells[r, c].Value = itemid;
+
+                                            thisWS2.Cells[r, hsamCol].Value = tagvalue;
+
+
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    if (wordlength < 8 && wordlength > 4)  //VS, WLB, BKEY, HSAM, DG, awol
+                                    {
+                                        string itemid = symbols.Substring(lastspace + 1, wordlength);
+                                        thisWS2.Cells[r, c].Value = itemid;
+                                    }
+                                }
+                            }
+
+
+
+                            
                         }
+                    }
                     }
                     
             }
